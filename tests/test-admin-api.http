@@ -1,0 +1,228 @@
+### ============================================
+### PRACTIDENT - PRUEBAS COMPLETAS ADMIN
+### Primero ejecuta el SQL para crear el admin
+### ============================================
+
+### ============================================
+### 1. LOGIN ADMIN
+### ============================================
+
+### 1.1 Login como Administrador
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@practident.com",
+  "password": "Admin123!"
+}
+
+### Guarda el token que recibes como: TOKEN_ADMIN
+
+### 1.2 Ver perfil del admin
+GET http://localhost:3000/api/auth/profile
+Authorization: Bearer TOKEN_ADMIN
+
+### ============================================
+### 2. GESTIÓN DE USUARIOS
+### ============================================
+
+### 2.1 Ver estadísticas generales de usuarios
+GET http://localhost:3000/api/users/stats
+Authorization: Bearer TOKEN_ADMIN
+
+### 2.2 Listar TODOS los usuarios
+GET http://localhost:3000/api/users
+Authorization: Bearer TOKEN_ADMIN
+
+### 2.3 Listar solo PRACTICANTES
+GET http://localhost:3000/api/users?tipo_usuario=practicante
+Authorization: Bearer TOKEN_ADMIN
+
+### 2.4 Listar solo MAESTROS
+GET http://localhost:3000/api/users?tipo_usuario=maestro
+Authorization: Bearer TOKEN_ADMIN
+
+### 2.5 Listar solo PACIENTES
+GET http://localhost:3000/api/users?tipo_usuario=paciente
+Authorization: Bearer TOKEN_ADMIN
+
+### 2.6 Listar usuarios ACTIVOS con paginación
+GET http://localhost:3000/api/users?estado=activo&page=1&limit=10
+Authorization: Bearer TOKEN_ADMIN
+
+### 2.7 Buscar usuarios por nombre o email
+GET http://localhost:3000/api/users?search=juan
+Authorization: Bearer TOKEN_ADMIN
+
+### 2.8 Ver detalles completos de un usuario específico (ID: 2)
+GET http://localhost:3000/api/users/2
+Authorization: Bearer TOKEN_ADMIN
+
+### 2.9 Actualizar datos de un usuario
+PUT http://localhost:3000/api/users/2
+Authorization: Bearer TOKEN_ADMIN
+Content-Type: application/json
+
+{
+  "nombre": "Juan Actualizado",
+  "semestre": 6,
+  "promedio": 9.5
+}
+
+### 2.10 Desactivar un usuario
+PATCH http://localhost:3000/api/users/2/toggle-status
+Authorization: Bearer TOKEN_ADMIN
+Content-Type: application/json
+
+{
+  "activo": false
+}
+
+### 2.11 Activar un usuario
+PATCH http://localhost:3000/api/users/2/toggle-status
+Authorization: Bearer TOKEN_ADMIN
+Content-Type: application/json
+
+{
+  "activo": true
+}
+
+### 2.12 Resetear contraseña de un usuario
+POST http://localhost:3000/api/users/2/reset-password
+Authorization: Bearer TOKEN_ADMIN
+Content-Type: application/json
+
+{
+  "newPassword": "NuevaPass123!"
+}
+
+### 2.13 Eliminar usuario (soft delete)
+DELETE http://localhost:3000/api/users/5
+Authorization: Bearer TOKEN_ADMIN
+
+### ============================================
+### 3. GESTIÓN DE PRÁCTICAS (ADMIN VE TODO)
+### ============================================
+
+### 3.1 Ver estadísticas globales de prácticas
+GET http://localhost:3000/api/practices/statistics
+Authorization: Bearer TOKEN_ADMIN
+
+### 3.2 Ver TODAS las prácticas de todos los maestros
+GET http://localhost:3000/api/practices
+Authorization: Bearer TOKEN_ADMIN
+
+### 3.3 Filtrar prácticas por estado
+GET http://localhost:3000/api/practices?estado=activa
+Authorization: Bearer TOKEN_ADMIN
+
+### 3.4 Filtrar por tipo de práctica
+GET http://localhost:3000/api/practices?tipo_practica=Endodoncia
+Authorization: Bearer TOKEN_ADMIN
+
+### 3.5 Filtrar por nivel de dificultad
+GET http://localhost:3000/api/practices?nivel_dificultad=basico
+Authorization: Bearer TOKEN_ADMIN
+
+### 3.6 Buscar prácticas por nombre
+GET http://localhost:3000/api/practices?search=endodoncia
+Authorization: Bearer TOKEN_ADMIN
+
+### 3.7 Ver detalles de una práctica específica
+GET http://localhost:3000/api/practices/1
+Authorization: Bearer TOKEN_ADMIN
+
+### 3.8 Ver practicantes asignados a una práctica
+GET http://localhost:3000/api/practices/1/practicantes
+Authorization: Bearer TOKEN_ADMIN
+
+### 3.9 Actualizar cualquier práctica (incluso si no es suya)
+PUT http://localhost:3000/api/practices/1
+Authorization: Bearer TOKEN_ADMIN
+Content-Type: application/json
+
+{
+  "descripcion": "Descripción actualizada por admin",
+  "cupo_maximo": 25,
+  "estado": "activa"
+}
+
+### 3.10 Asignar practicante a cualquier práctica
+POST http://localhost:3000/api/practices/1/assign
+Authorization: Bearer TOKEN_ADMIN
+Content-Type: application/json
+
+{
+  "practicante_id": 1
+}
+
+### 3.11 Desasignar practicante de una práctica
+DELETE http://localhost:3000/api/practices/1/practicantes/1
+Authorization: Bearer TOKEN_ADMIN
+
+### 3.12 Actualizar estado de asignación
+PATCH http://localhost:3000/api/practices/1/practicantes/1/status
+Authorization: Bearer TOKEN_ADMIN
+Content-Type: application/json
+
+{
+  "estado": "completado",
+  "observaciones": "Práctica completada satisfactoriamente"
+}
+
+### 3.13 Eliminar cualquier práctica
+DELETE http://localhost:3000/api/practices/2
+Authorization: Bearer TOKEN_ADMIN
+
+### ============================================
+### 4. REPORTES Y AUDITORÍA
+### ============================================
+
+### 4.1 Ver logs de auditoría (requiere implementación)
+# GET http://localhost:3000/api/admin/audit-logs
+# Authorization: Bearer TOKEN_ADMIN
+
+### 4.2 Ver sesiones activas (requiere implementación)
+# GET http://localhost:3000/api/admin/active-sessions
+# Authorization: Bearer TOKEN_ADMIN
+
+### ============================================
+### 5. PRUEBAS DE PERMISOS
+### ============================================
+
+### 5.1 Intentar que un practicante acceda a gestión de usuarios (debe fallar)
+GET http://localhost:3000/api/users/stats
+Authorization: Bearer TOKEN_PRACTICANTE
+
+### 5.2 Intentar que un maestro acceda a gestión de usuarios (debe fallar)
+GET http://localhost:3000/api/users/stats
+Authorization: Bearer TOKEN_MAESTRO
+
+### 5.3 Intentar que un paciente acceda a prácticas (debe fallar)
+GET http://localhost:3000/api/practices
+Authorization: Bearer TOKEN_PACIENTE
+
+### ============================================
+### 6. VERIFICACIÓN DE SALUD DEL SISTEMA
+### ============================================
+
+### 6.1 Health check del servidor
+GET http://localhost:3000/api/health
+
+### 6.2 Verificar que admin puede ver todo
+GET http://localhost:3000/api/users
+Authorization: Bearer TOKEN_ADMIN
+
+### 6.3 Cambiar contraseña del admin
+POST http://localhost:3000/api/auth/change-password
+Authorization: Bearer TOKEN_ADMIN
+Content-Type: application/json
+
+{
+  "currentPassword": "Admin123!",
+  "newPassword": "NewAdmin123!"
+}
+
+### 6.4 Logout admin
+POST http://localhost:3000/api/auth/logout
+Authorization: Bearer TOKEN_ADMIN

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PractiDent - Sistema de Gestión Odontológica</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <nav>
+                <div class="nav-container">
+                    <div class="nav-brand">
+                        <span class="logo">🦷</span>
+                        <h1>PractiDent</h1>
+                    </div>
+                    <div id="nav-links">
+                        <a href="#" id="login-btn" class="btn-outline">Iniciar Sesión</a>
+                        <a href="#" id="register-btn" class="btn-primary">Registrarse</a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        
+        <main id="main-content">
+            <!-- Hero Section -->
+            <section class="hero">
+                <div class="hero-content">
+                    <h2 class="hero-title">Sistema de Gestión de Prácticas Odontológicas</h2>
+                    <p class="hero-subtitle">Optimiza la administración de tu clínica dental universitaria</p>
+                    <div class="hero-buttons">
+                        <button class="hero-btn primary" onclick="document.getElementById('register-btn').click()">
+                            Comenzar Ahora
+                        </button>
+                        <button class="hero-btn secondary" onclick="scrollToFeatures()">
+                            Conocer Más
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Status Bar Minimalista -->
+                <div id="api-status" class="status-bar">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Verificando conexión...</span>
+                </div>
+            </section>
+
+            <!-- Features Section -->
+            <section id="features" class="features">
+                <div class="container">
+                    <h3 class="section-title">¿Por qué elegir PractiDent?</h3>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">📅</div>
+                            <h4>Gestión de Citas</h4>
+                            <p>Programa y administra citas odontológicas de manera eficiente</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">👨‍⚕️</div>
+                            <h4>Control de Prácticas</h4>
+                            <p>Supervisa y evalúa las prácticas de los estudiantes</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📊</div>
+                            <h4>Reportes Detallados</h4>
+                            <p>Genera reportes completos del desempeño y progreso</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🔒</div>
+                            <h4>Seguridad Total</h4>
+                            <p>Sistema seguro con autenticación JWT y encriptación</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CTA Section -->
+            <section class="cta">
+                <div class="container">
+                    <h3>¿Listo para mejorar tu práctica odontológica?</h3>
+                    <p>Únete a cientos de profesionales que ya confían en PractiDent</p>
+                    <button class="cta-btn" onclick="document.getElementById('register-btn').click()">
+                        Registrarse Gratis
+                    </button>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2024 PractiDent - ITSX | Todos los derechos reservados</p>
+                <div class="footer-links">
+                    <a href="#">Términos</a>
+                    <a href="#">Privacidad</a>
+                    <a href="#">Contacto</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="js/app.js"></script>
+</body>
+</html>

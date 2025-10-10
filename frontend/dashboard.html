@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PractiDent</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🦷 PractiDent</h2>
+            <span class="close-sidebar" onclick="toggleSidebar()">✕</span>
+        </div>
+        
+        <div class="user-info">
+            <div class="user-avatar">
+                <span id="userInitial">U</span>
+            </div>
+            <div class="user-details">
+                <h4 id="userName">Cargando...</h4>
+                <span class="user-role" id="userRole">...</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#dashboard" class="nav-link active" data-section="dashboard">
+                <span>📊</span> Dashboard
+            </a>
+            
+            <!-- Links para Practicante -->
+            <div class="nav-section practicante-only" style="display:none;">
+                <a href="#mis-citas" class="nav-link" data-section="mis-citas">
+                    <span>📅</span> Mis Citas
+                </a>
+                <a href="#mis-evaluaciones" class="nav-link" data-section="mis-evaluaciones">
+                    <span>⭐</span> Mis Evaluaciones
+                </a>
+                <a href="#mis-practicas" class="nav-link" data-section="mis-practicas">
+                    <span>📚</span> Mis Prácticas
+                </a>
+            </div>
+
+            <!-- Links para Maestro -->
+            <div class="nav-section maestro-only" style="display:none;">
+                <a href="#estudiantes" class="nav-link" data-section="estudiantes">
+                    <span>👥</span> Estudiantes
+                </a>
+                <a href="#practicas" class="nav-link" data-section="practicas">
+                    <span>📚</span> Prácticas
+                </a>
+                <a href="#evaluaciones" class="nav-link" data-section="evaluaciones">
+                    <span>✅</span> Evaluaciones
+                </a>
+                <a href="#usuarios" class="nav-link" data-section="usuarios">
+                    <span>👤</span> Gestión Usuarios
+                </a>
+            </div>
+
+            <!-- Links para Paciente -->
+            <div class="nav-section paciente-only" style="display:none;">
+                <a href="#agendar-cita" class="nav-link" data-section="agendar-cita">
+                    <span>➕</span> Agendar Cita
+                </a>
+                <a href="#mis-citas-paciente" class="nav-link" data-section="mis-citas-paciente">
+                    <span>📅</span> Mis Citas
+                </a>
+                <a href="#historial" class="nav-link" data-section="historial">
+                    <span>📋</span> Mi Historial
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <a href="#perfil" class="nav-link" data-section="perfil">
+                    <span>⚙️</span> Mi Perfil
+                </a>
+                <a href="#" class="nav-link logout" onclick="logout()">
+                    <span>🚪</span> Cerrar Sesión
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <div class="topbar-title">
+                <h2 id="sectionTitle">Dashboard</h2>
+            </div>
+            <div class="topbar-actions">
+                <div class="notifications-icon" onclick="toggleNotifications()">
+                    🔔
+                    <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+                </div>
+                <div class="notifications-dropdown" id="notificationsDropdown">
+                    <div class="notifications-header">
+                        <h4>Notificaciones</h4>
+                    </div>
+                    <div class="notifications-list" id="notificationsList">
+                        <p class="no-notifications">No hay notificaciones nuevas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area" id="contentArea">
+            <!-- Dashboard Principal -->
+            <div class="content-section active" id="dashboard">
+                <!-- Stats Cards -->
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+
+                <!-- Dashboard específico por rol -->
+                <div class="dashboard-content" id="dashboardContent">
+                    <!-- Se llenará dinámicamente según el rol -->
+                </div>
+            </div>
+
+            <!-- Sección de Prácticas (Maestros y Practicantes) -->
+            <div class="content-section" id="practicas" style="display:none;">
+                <div class="section-header">
+                    <h3>Gestión de Prácticas</h3>
+                    <button class="btn btn-primary maestro-only" onclick="showCreatePracticeModal()">
+                        ➕ Nueva Práctica
+                    </button>
+                </div>
+
+                <!-- Filtros -->
+                <div class="filters-bar">
+                    <select id="filterPracticeStatus" onchange="loadPractices()">
+                        <option value="">Todos los estados</option>
+                        <option value="activa">Activas</option>
+                        <option value="completada">Completadas</option>
+                        <option value="cancelada">Canceladas</option>
+                    </select>
+                    <select id="filterPracticeLevel" onchange="loadPractices()">
+                        <option value="">Todos los niveles</option>
+                        <option value="basico">Básico</option>
+                        <option value="intermedio">Intermedio</option>
+                        <option value="avanzado">Avanzado</option>
+                    </select>
+                    <input type="text" id="searchPractice" placeholder="Buscar práctica..." onkeyup="searchPractices()">
+                </div>
+
+                <!-- Tabla de prácticas -->
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Nivel</th>
+                                <th>Duración</th>
+                                <th>Cupo</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="practicesTableBody">
+                            <!-- Se llenará dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                <div class="pagination" id="practicesPagination">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Sección Mis Prácticas (Solo Practicantes) -->
+            <div class="content-section" id="mis-practicas" style="display:none;">
+                <div class="section-header">
+                    <h3>Mis Prácticas</h3>
+                    <button class="btn btn-primary" onclick="loadAvailablePractices()">
+                        🔍 Ver Prácticas Disponibles
+                    </button>
+                </div>
+
+                <!-- Estadísticas del practicante -->
+                <div class="stats-grid" style="margin-bottom: 20px;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalPracticasAsignadas">0</div>
+                        <div class="stat-label">Prácticas Asignadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="practicasEnProgreso">0</div>
+                        <div class="stat-label">En Progreso</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="practicasCompletadas">0</div>
+                        <div class="stat-label">Completadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="promedioCalificacion">-</div>
+                        <div class="stat-label">Promedio Calificación</div>
+                    </div>
+                </div>
+
+                <!-- Lista de mis prácticas -->
+                <div id="myPracticesList">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Sección de Usuarios (Solo Maestros) -->
+            <div class="content-section" id="usuarios" style="display:none;">
+                <div class="section-header">
+                    <h3>Gestión de Usuarios</h3>
+                    <button class="btn btn-primary" onclick="showCreateUserModal()">
+                        ➕ Nuevo Usuario
+                    </button>
+                </div>
+
+                <!-- Filtros -->
+                <div class="filters-bar">
+                    <select id="filterTipoUsuario" onchange="loadUsers()">
+                        <option value="">Todos los tipos</option>
+                        <option value="practicante">Practicantes</option>
+                        <option value="maestro">Maestros</option>
+                        <option value="paciente">Pacientes</option>
+                    </select>
+                    <input type="text" id="searchUser" placeholder="Buscar por nombre o email..." onkeyup="searchUsers()">
+                    <select id="filterActivo" onchange="loadUsers()">
+                        <option value="">Todos</option>
+                        <option value="true">Activos</option>
+                        <option value="false">Inactivos</option>
+                    </select>
+                </div>
+
+                <!-- Tabla de usuarios -->
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Tipo</th>
+                                <th>Estado</th>
+                                <th>Último Acceso</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Se llenará dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                <div class="pagination" id="usersPagination">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Otras secciones -->
+            <div class="content-section" id="perfil" style="display:none;">
+                <div class="profile-container">
+                    <h3>Mi Perfil</h3>
+                    <form id="profileForm" class="profile-form">
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" id="profileNombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido</label>
+                            <input type="text" id="profileApellido" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="profileEmail" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="tel" id="profileTelefono">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </form>
+
+                    <div class="password-section">
+                        <h4>Cambiar Contraseña</h4>
+                        <form id="passwordForm">
+                            <div class="form-group">
+                                <label>Contraseña Actual</label>
+                                <input type="password" id="currentPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nueva Contraseña</label>
+                                <input type="password" id="newPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Confirmar Nueva Contraseña</label>
+                                <input type="password" id="confirmPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary">Cambiar Contraseña</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Práctica -->
+    <div class="modal" id="practiceModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closePracticeModal()">&times;</span>
+            <h3 id="practiceModalTitle">Nueva Práctica</h3>
+            <form id="practiceForm">
+                <input type="hidden" id="practiceId">
+                
+                <div class="form-group">
+                    <label>Nombre de la Práctica</label>
+                    <input type="text" id="practiceNombre" required maxlength="200">
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="practiceDescripcion" rows="3" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Requisitos</label>
+                    <textarea id="practiceRequisitos" rows="2" placeholder="Requisitos necesarios para la práctica"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo de Práctica</label>
+                        <select id="practiceTipo" required>
+                            <option value="">Seleccione...</option>
+                            <option value="Limpieza">Limpieza Dental</option>
+                            <option value="Extraccion">Extracción</option>
+                            <option value="Endodoncia">Endodoncia</option>
+                            <option value="Ortodoncia">Ortodoncia</option>
+                            <option value="Periodoncia">Periodoncia</option>
+                            <option value="Restauracion">Restauración</option>
+                            <option value="Cirugia">Cirugía</option>
+                            <option value="Protesis">Prótesis</option>
+                            <option value="Diagnostico">Diagnóstico</option>
+                            <option value="Prevencion">Prevención</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nivel de Dificultad</label>
+                        <select id="practiceNivel" required>
+                            <option value="basico">Básico</option>
+                            <option value="intermedio">Intermedio</option>
+                            <option value="avanzado">Avanzado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Duración Estimada (horas)</label>
+                        <input type="number" id="practiceDuracion" min="1" max="8" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cupo Máximo</label>
+                        <input type="number" id="practiceCupo" min="1" max="50" value="10" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fecha de Inicio</label>
+                        <input type="date" id="practiceFechaInicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Fin</label>
+                        <input type="date" id="practiceFechaFin" required>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closePracticeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Ver/Gestionar Practicantes -->
+    <div class="modal" id="practicantesModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="modal-close" onclick="closePracticantesModal()">&times;</span>
+            <h3>Practicantes Asignados</h3>
+            
+            <div class="section-header" style="margin-bottom: 20px;">
+                <h4 id="practiceNameInModal">Nombre de la Práctica</h4>
+                <button class="btn btn-primary btn-sm" onclick="showAssignPracticanteModal()">
+                    ➕ Asignar Practicante
+                </button>
+            </div>
+
+            <div id="practicantesList">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Asignar Practicante -->
+    <div class="modal" id="assignPracticanteModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeAssignPracticanteModal()">&times;</span>
+            <h3>Asignar Practicante</h3>
+            
+            <form id="assignPracticanteForm">
+                <input type="hidden" id="practiceIdForAssign">
+                
+<div class="form-group">
+                    <label>Seleccionar Practicante</label>
+                    <select id="practicanteToAssign" required>
+                        <option value="">Seleccione un practicante...</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAssignPracticanteModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Asignar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Prácticas Disponibles (Practicantes) -->
+    <div class="modal" id="availablePracticesModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="modal-close" onclick="closeAvailablePracticesModal()">&times;</span>
+            <h3>Prácticas Disponibles</h3>
+            
+            <div class="filters-bar" style="margin-bottom: 20px;">
+                <select id="filterAvailableLevel" onchange="filterAvailablePractices()">
+                    <option value="">Todos los niveles</option>
+                    <option value="basico">Básico</option>
+                    <option value="intermedio">Intermedio</option>
+                    <option value="avanzado">Avanzado</option>
+                </select>
+                <input type="text" placeholder="Buscar práctica..." id="searchAvailable" onkeyup="filterAvailablePractices()">
+            </div>
+
+            <div id="availablePracticesList">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Usuario -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeUserModal()">&times;</span>
+            <h3 id="userModalTitle">Nuevo Usuario</h3>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" id="userNombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <input type="text" id="userApellido" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="userEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="userTelefono">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo de Usuario</label>
+                        <select id="userTipo" required onchange="showUserTypeFields()">
+                            <option value="">Seleccione...</option>
+                            <option value="practicante">Practicante</option>
+                            <option value="maestro">Maestro</option>
+                            <option value="paciente">Paciente</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="passwordGroup">
+                        <label>Contraseña</label>
+                        <input type="password" id="userPassword">
+                        <small>Mín. 8 caracteres, mayúscula, minúscula, número y símbolo</small>
+                    </div>
+                </div>
+
+                <!-- Campos específicos por tipo -->
+                <div id="practicanteFields" class="type-fields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Matrícula</label>
+                            <input type="text" id="practicanteMatricula">
+                        </div>
+                        <div class="form-group">
+                            <label>Semestre</label>
+                            <input type="number" id="practicanteSemestre" min="1" max="10">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Turno</label>
+                            <select id="practicanteTurno">
+                                <option value="matutino">Matutino</option>
+                                <option value="vespertino">Vespertino</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Maestro Asignado</label>
+                            <select id="practicanteMaestro">
+                                <option value="">Seleccione...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="maestroFields" class="type-fields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Cédula Profesional</label>
+                            <input type="text" id="maestroCedula">
+                        </div>
+                        <div class="form-group">
+                            <label>Especialidad</label>
+                            <input type="text" id="maestroEspecialidad">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Años de Experiencia</label>
+                        <input type="number" id="maestroExperiencia" min="0">
+                    </div>
+                </div>
+
+                <div id="pacienteFields" class="type-fields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha de Nacimiento</label>
+                            <input type="date" id="pacienteFechaNacimiento">
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <input type="text" id="pacienteDireccion">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Historial Médico</label>
+                        <textarea id="pacienteHistorial" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Incluir los scripts en orden correcto -->
+    <script src="js/dashboard.js"></script>
+    <script src="js/practices.js"></script>
+</body>
+</html>
