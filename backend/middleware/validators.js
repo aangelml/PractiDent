@@ -1,5 +1,26 @@
-// backend/middleware/validators.js
-const { body, param, query } = require('express-validator');
+// backend/middleware/validators.js - ACTUALIZADO SPRINT B2
+const { body, param, query, validationResult } = require('express-validator');
+
+// Middleware para manejar errores de validación
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Error de validación',
+      errors: errors.array().map(err => ({
+        field: err.path,
+        message: err.msg,
+        value: err.value
+      }))
+    });
+  }
+  next();
+};
+
+// ============================================
+// VALIDADORES DE AUTENTICACIÓN (EXISTENTES)
+// ============================================
 
 // Validadores para autenticación
 exports.validateRegister = [
@@ -91,7 +112,9 @@ exports.validateRegister = [
   body('historial_medico')
     .if(body('tipo_usuario').equals('paciente'))
     .optional()
-    .isLength({ max: 1000 }).withMessage('El historial médico no puede exceder 1000 caracteres')
+    .isLength({ max: 1000 }).withMessage('El historial médico no puede exceder 1000 caracteres'),
+  
+  handleValidationErrors
 ];
 
 // Validador para login
@@ -103,13 +126,17 @@ exports.validateLogin = [
     .normalizeEmail(),
   
   body('password')
-    .notEmpty().withMessage('La contraseña es requerida')
+    .notEmpty().withMessage('La contraseña es requerida'),
+  
+  handleValidationErrors
 ];
 
 // Validador para refresh token
 exports.validateRefreshToken = [
   body('refreshToken')
-    .notEmpty().withMessage('El refresh token es requerido')
+    .notEmpty().withMessage('El refresh token es requerido'),
+  
+  handleValidationErrors
 ];
 
 // Validador para cambio de contraseña
@@ -128,5 +155,258 @@ exports.validateChangePassword = [
   body('confirmPassword')
     .notEmpty().withMessage('La confirmación de contraseña es requerida')
     .custom((value, { req }) => value === req.body.newPassword)
-    .withMessage('Las contraseñas no coinciden')
+    .withMessage('Las contraseñas no coinciden'),
+  
+  handleValidationErrors
 ];
+
+// ============================================
+// NUEVOS VALIDADORES PARA PRÁCTICAS - SPRINT B2
+// ============================================
+
+// Validar creación de práctica
+exports.validateCreatePractice = [
+  body('nombre')
+    .trim()
+    .notEmpty().withMessage('El nombre de la práctica es requerido')
+    .isLength({ min: 5, max: 200 }).withMessage('El nombre debe tener entre 5 y 200 caracteres'),
+  
+  body('descripcion')
+    .trim()
+    .notEmpty().withMessage('La descripción es requerida')
+    .isLength({ min: 10, max: 1000 }).withMessage('La descripción debe tener entre 10 y 1000 caracteres'),
+  
+  body('requisitos')
+    .optional()
+    .trim()
+    .isLength({ max: 500 }).withMessage('Los requisitos no pueden exceder 500 caracteres'),
+  
+  body('tipo_practica')
+    .trim()
+    .notEmpty().withMessage('El tipo de práctica es requerido')
+    .isLength({ min: 3, max: 100 }).withMessage('El tipo de práctica debe tener entre 3 y 100 caracteres'),
+  
+  body('duracion_estimada_horas')
+    .optional()
+    .isInt({ min: 1, max: 100 }).withMessage('La duración debe ser entre 1 y 100 horas'),
+  
+  body('cupo_maximo')
+    .optional()
+    .isInt({ min: 1, max: 50 }).withMessage('El cupo máximo debe ser entre 1 y 50'),
+  
+  body('fecha_inicio')
+    .notEmpty().withMessage('La fecha de inicio es requerida')
+    .isISO8601().withMessage('Formato de fecha inválido')
+    .custom((value) => {
+      const startDate = new Date(value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (startDate < today) {
+        throw new Error('La fecha de inicio no puede ser anterior a hoy');
+      }
+      return true;
+    }),
+  
+  body('fecha_fin')
+    .notEmpty().withMessage('La fecha de fin es requerida')
+    .isISO8601().withMessage('Formato de fecha inválido')
+    .custom((value, { req }) => {
+      const endDate = new Date(value);
+      const startDate = new Date(req.body.fecha_inicio);
+      if (endDate <= startDate) {
+        throw new Error('La fecha de fin debe ser posterior a la fecha de inicio');
+      }
+      return true;
+    }),
+  
+  body('estado')
+    .optional()
+    .isIn(['activa', 'completada', 'cancelada']).withMessage('Estado inválido'),
+  
+  body('nivel_dificultad')
+    .optional()
+    .isIn(['basico', 'intermedio', 'avanzado']).withMessage('Nivel de dificultad inválido'),
+  
+  handleValidationErrors
+];
+
+// Validar actualización de práctica
+exports.validateUpdatePractice = [
+  body('nombre')
+    .optional()
+    .trim()
+    .isLength({ min: 5, max: 200 }).withMessage('El nombre debe tener entre 5 y 200 caracteres'),
+  
+  body('descripcion')
+    .optional()
+    .trim()
+    .isLength({ min: 10, max: 1000 }).withMessage('La descripción debe tener entre 10 y 1000 caracteres'),
+  
+  body('requisitos')
+    .optional()
+    .trim()
+    .isLength({ max: 500 }).withMessage('Los requisitos no pueden exceder 500 caracteres'),
+  
+  body('tipo_practica')
+    .optional()
+    .trim()
+    .isLength({ min: 3, max: 100 }).withMessage('El tipo de práctica debe tener entre 3 y 100 caracteres'),
+  
+  body('duracion_estimada_horas')
+    .optional()
+    .isInt({ min: 1, max: 100 }).withMessage('La duración debe ser entre 1 y 100 horas'),
+  
+  body('cupo_maximo')
+    .optional()
+    .isInt({ min: 1, max: 50 }).withMessage('El cupo máximo debe ser entre 1 y 50'),
+  
+  body('fecha_inicio')
+    .optional()
+    .isISO8601().withMessage('Formato de fecha inválido'),
+  
+  body('fecha_fin')
+    .optional()
+    .isISO8601().withMessage('Formato de fecha inválido'),
+  
+  body('estado')
+    .optional()
+    .isIn(['activa', 'completada', 'cancelada']).withMessage('Estado inválido'),
+  
+  body('nivel_dificultad')
+    .optional()
+    .isIn(['basico', 'intermedio', 'avanzado']).withMessage('Nivel de dificultad inválido'),
+  
+  handleValidationErrors
+];
+
+// Validar asignación de practicante
+exports.validateAssignPracticante = [
+  body('practicante_id')
+    .notEmpty().withMessage('El ID del practicante es requerido')
+    .isInt({ min: 1 }).withMessage('ID de practicante inválido'),
+  
+  handleValidationErrors
+];
+
+// Validar actualización de estado de asignación
+exports.validateUpdateAssignmentStatus = [
+  body('estado')
+    .notEmpty().withMessage('El estado es requerido')
+    .isIn(['asignado', 'en_progreso', 'completado', 'cancelado']).withMessage('Estado inválido'),
+  
+  body('observaciones')
+    .optional()
+    .trim()
+    .isLength({ max: 500 }).withMessage('Las observaciones no pueden exceder 500 caracteres'),
+  
+  handleValidationErrors
+];
+
+// Validar calificación de practicante
+exports.validateGradePracticante = [
+  body('calificacion')
+    .notEmpty().withMessage('La calificación es requerida')
+    .isFloat({ min: 0, max: 10 }).withMessage('La calificación debe estar entre 0 y 10')
+    .custom((value) => {
+      // Permitir solo un decimal
+      const decimal = value.toString().split('.')[1];
+      if (decimal && decimal.length > 2) {
+        throw new Error('La calificación solo puede tener hasta 2 decimales');
+      }
+      return true;
+    }),
+  
+  body('observaciones')
+    .optional()
+    .trim()
+    .isLength({ max: 500 }).withMessage('Las observaciones no pueden exceder 500 caracteres'),
+  
+  handleValidationErrors
+];
+
+// Validar parámetros de ID
+exports.validatePracticeId = [
+  param('id')
+    .isInt({ min: 1 }).withMessage('ID de práctica inválido'),
+  
+  handleValidationErrors
+];
+
+exports.validatePracticanteId = [
+  param('practicanteId')
+    .isInt({ min: 1 }).withMessage('ID de practicante inválido'),
+  
+  handleValidationErrors
+];
+
+// Validar query params para filtros
+exports.validatePracticeFilters = [
+  query('estado')
+    .optional()
+    .isIn(['activa', 'completada', 'cancelada']).withMessage('Estado inválido'),
+  
+  query('tipo_practica')
+    .optional()
+    .trim()
+    .isLength({ max: 100 }).withMessage('Tipo de práctica inválido'),
+  
+  query('nivel_dificultad')
+    .optional()
+    .isIn(['basico', 'intermedio', 'avanzado']).withMessage('Nivel de dificultad inválido'),
+  
+  query('search')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 }).withMessage('El término de búsqueda debe tener entre 2 y 100 caracteres'),
+  
+  query('page')
+    .optional()
+    .isInt({ min: 1 }).withMessage('Número de página inválido'),
+  
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 }).withMessage('El límite debe estar entre 1 y 100'),
+  
+  handleValidationErrors
+];
+
+// Validar disponibilidad de maestro
+exports.validateMaestroDisponibilidad = [
+  body('dia_semana')
+    .notEmpty().withMessage('El día de la semana es requerido')
+    .isIn(['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'])
+    .withMessage('Día de la semana inválido'),
+  
+  body('hora_inicio')
+    .notEmpty().withMessage('La hora de inicio es requerida')
+    .matches(/^([01]\d|2[0-3]):([0-5]\d)$/).withMessage('Formato de hora inválido (HH:MM)'),
+  
+  body('hora_fin')
+    .notEmpty().withMessage('La hora de fin es requerida')
+    .matches(/^([01]\d|2[0-3]):([0-5]\d)$/).withMessage('Formato de hora inválido (HH:MM)')
+    .custom((value, { req }) => {
+      const [startHour, startMin] = req.body.hora_inicio.split(':').map(Number);
+      const [endHour, endMin] = value.split(':').map(Number);
+      
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      
+      if (endMinutes <= startMinutes) {
+        throw new Error('La hora de fin debe ser posterior a la hora de inicio');
+      }
+      
+      if (endMinutes - startMinutes < 30) {
+        throw new Error('La disponibilidad debe ser de al menos 30 minutos');
+      }
+      
+      return true;
+    }),
+  
+  body('activo')
+    .optional()
+    .isBoolean().withMessage('El campo activo debe ser booleano'),
+  
+  handleValidationErrors
+];
+
+module.exports = exports;

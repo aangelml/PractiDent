@@ -1,0 +1,514 @@
+###############################################
+# PRACTIDENT - TEST SPRINT B2
+# Sistema de Prácticas Completo
+###############################################
+
+@baseURL = http://localhost:3000/api
+@contentType = application/json
+
+# Variables de autenticación (actualizar después de login)
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@maestroToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@practicanteToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# IDs de prueba (actualizar según tus datos)
+@maestroId = 1
+@practicanteId = 1
+@practicaId = 1
+
+###############################################
+# 1. AUTENTICACIÓN (Obtener tokens)
+###############################################
+
+### 1.1 Login como Admin
+POST {{baseURL}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@practident.com",
+  "password": "Admin123!"
+}
+
+### 1.2 Login como Maestro (crear usuario primero si no existe)
+POST {{baseURL}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "maestro1@practident.com",
+  "password": "Maestro123!"
+}
+
+### 1.3 Login como Practicante (crear usuario primero si no existe)
+POST {{baseURL}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "practicante1@practident.com",
+  "password": "Practicante123!"
+}
+
+###############################################
+# 2. CREAR USUARIOS DE PRUEBA (Si no existen)
+###############################################
+
+### 2.1 Registrar Maestro
+POST {{baseURL}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Carlos",
+  "apellido": "Rodríguez",
+  "email": "maestro1@practident.com",
+  "password": "Maestro123!",
+  "tipo_usuario": "maestro",
+  "cedula_profesional": "1234567",
+  "especialidad": "Ortodoncia",
+  "anos_experiencia": 10
+}
+
+### 2.2 Registrar Practicante
+POST {{baseURL}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Ana",
+  "apellido": "García",
+  "email": "practicante1@practident.com",
+  "password": "Practicante123!",
+  "tipo_usuario": "practicante",
+  "matricula": "S20241001",
+  "semestre": 6,
+  "turno": "matutino",
+  "promedio": 9.5
+}
+
+### 2.3 Registrar Practicante 2
+POST {{baseURL}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Luis",
+  "apellido": "Martínez",
+  "email": "practicante2@practident.com",
+  "password": "Practicante123!",
+  "tipo_usuario": "practicante",
+  "matricula": "S20241002",
+  "semestre": 7,
+  "turno": "vespertino"
+}
+
+###############################################
+# 3. GESTIÓN DE PRÁCTICAS
+###############################################
+
+### 3.1 Crear práctica básica (Maestro)
+POST {{baseURL}}/practices
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "nombre": "Limpieza Dental Básica",
+  "descripcion": "Práctica de limpieza dental y profilaxis para nivel básico",
+  "requisitos": "Haber completado el curso de Anatomía Dental I",
+  "tipo_practica": "Profilaxis",
+  "duracion_estimada_horas": 2,
+  "cupo_maximo": 5,
+  "fecha_inicio": "2025-11-01",
+  "fecha_fin": "2025-12-15",
+  "nivel_dificultad": "basico"
+}
+
+### 3.2 Crear práctica intermedia (Maestro)
+POST {{baseURL}}/practices
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "nombre": "Endodoncia de Molares",
+  "descripcion": "Tratamiento de conductos en molares con múltiples canales",
+  "requisitos": "Anatomía Dental II, Endodoncia I completada, promedio mínimo 8.5",
+  "tipo_practica": "Endodoncia",
+  "duracion_estimada_horas": 4,
+  "cupo_maximo": 3,
+  "fecha_inicio": "2025-11-10",
+  "fecha_fin": "2025-12-20",
+  "nivel_dificultad": "intermedio"
+}
+
+### 3.3 Crear práctica avanzada (Maestro)
+POST {{baseURL}}/practices
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "nombre": "Cirugía de Tercer Molar Impactado",
+  "descripcion": "Extracción quirúrgica de terceros molares con diferentes grados de impactación",
+  "requisitos": "Cirugía Bucal I y II completadas, promedio mínimo 9.0, autorización especial",
+  "tipo_practica": "Cirugía Oral",
+  "duracion_estimada_horas": 3,
+  "cupo_maximo": 2,
+  "fecha_inicio": "2025-12-01",
+  "fecha_fin": "2026-01-31",
+  "nivel_dificultad": "avanzado"
+}
+
+### 3.4 ERROR: Crear práctica con fecha inválida
+POST {{baseURL}}/practices
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "nombre": "Práctica Inválida",
+  "descripcion": "Esta práctica debería fallar por fechas incorrectas",
+  "tipo_practica": "Prueba",
+  "fecha_inicio": "2025-12-31",
+  "fecha_fin": "2025-11-01",
+  "nivel_dificultad": "basico"
+}
+
+### 3.5 ERROR: Practicante intenta crear práctica
+POST {{baseURL}}/practices
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "nombre": "No debería poder crear",
+  "descripcion": "Solo los maestros pueden crear prácticas",
+  "tipo_practica": "Test",
+  "fecha_inicio": "2025-11-01",
+  "fecha_fin": "2025-12-01"
+}
+
+###############################################
+# 4. CONSULTAR PRÁCTICAS
+###############################################
+
+### 4.1 Listar todas las prácticas
+GET {{baseURL}}/practices
+Authorization: Bearer {{maestroToken}}
+
+### 4.2 Listar prácticas con filtros - Solo activas
+GET {{baseURL}}/practices?estado=activa
+Authorization: Bearer {{maestroToken}}
+
+### 4.3 Listar prácticas por nivel - Básico
+GET {{baseURL}}/practices?nivel_dificultad=basico
+Authorization: Bearer {{practicanteToken}}
+
+### 4.4 Listar prácticas por tipo
+GET {{baseURL}}/practices?tipo_practica=Endodoncia
+Authorization: Bearer {{maestroToken}}
+
+### 4.5 Buscar prácticas por texto
+GET {{baseURL}}/practices?search=limpieza
+Authorization: Bearer {{practicanteToken}}
+
+### 4.6 Listar con paginación
+GET {{baseURL}}/practices?page=1&limit=5
+Authorization: Bearer {{maestroToken}}
+
+### 4.7 Ver práctica específica
+GET {{baseURL}}/practices/{{practicaId}}
+Authorization: Bearer {{maestroToken}}
+
+### 4.8 Ver estadísticas de prácticas
+GET {{baseURL}}/practices/statistics
+Authorization: Bearer {{maestroToken}}
+
+###############################################
+# 5. ACTUALIZAR PRÁCTICAS
+###############################################
+
+### 5.1 Actualizar descripción de práctica
+PUT {{baseURL}}/practices/{{practicaId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "descripcion": "Descripción actualizada con más detalles sobre el procedimiento",
+  "requisitos": "Requisitos actualizados: Anatomía Dental I y II completadas"
+}
+
+### 5.2 Cambiar estado de práctica a completada
+PUT {{baseURL}}/practices/{{practicaId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "estado": "completada"
+}
+
+### 5.3 Aumentar cupo máximo
+PUT {{baseURL}}/practices/{{practicaId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "cupo_maximo": 10
+}
+
+### 5.4 ERROR: Practicante intenta actualizar práctica
+PUT {{baseURL}}/practices/{{practicaId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "nombre": "No debería poder actualizar"
+}
+
+###############################################
+# 6. ASIGNACIÓN DE PRACTICANTES
+###############################################
+
+### 6.1 Maestro asigna practicante a práctica
+POST {{baseURL}}/practices/{{practicaId}}/assign
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "practicante_id": {{practicanteId}}
+}
+
+### 6.2 Practicante se auto-asigna a práctica
+POST {{baseURL}}/practices/{{practicaId}}/assign
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practicante_id": {{practicanteId}}
+}
+
+### 6.3 ERROR: Asignar dos veces el mismo practicante
+POST {{baseURL}}/practices/{{practicaId}}/assign
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "practicante_id": {{practicanteId}}
+}
+
+### 6.4 Ver practicantes asignados
+GET {{baseURL}}/practices/{{practicaId}}/practicantes
+Authorization: Bearer {{maestroToken}}
+
+### 6.5 Desasignar practicante
+DELETE {{baseURL}}/practices/{{practicaId}}/practicantes/{{practicanteId}}
+Authorization: Bearer {{maestroToken}}
+
+###############################################
+# 7. GESTIÓN DE ESTADO DE ASIGNACIONES
+###############################################
+
+### 7.1 Cambiar estado a "en_progreso"
+PATCH {{baseURL}}/practices/{{practicaId}}/practicantes/{{practicanteId}}/status
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "estado": "en_progreso",
+  "observaciones": "El practicante ha iniciado la práctica correctamente"
+}
+
+### 7.2 Cambiar estado a "completado"
+PATCH {{baseURL}}/practices/{{practicaId}}/practicantes/{{practicanteId}}/status
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "estado": "completado",
+  "observaciones": "Práctica completada satisfactoriamente"
+}
+
+### 7.3 ERROR: Estado inválido
+PATCH {{baseURL}}/practices/{{practicaId}}/practicantes/{{practicanteId}}/status
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "estado": "estado_invalido"
+}
+
+###############################################
+# 8. CALIFICACIONES
+###############################################
+
+### 8.1 Calificar practicante - Calificación alta
+POST {{baseURL}}/practices/{{practicaId}}/practicantes/{{practicanteId}}/grade
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "calificacion": 9.5,
+  "observaciones": "Excelente desempeño, técnica correcta y trato profesional con el paciente"
+}
+
+### 8.2 Calificar practicante - Calificación media
+POST {{baseURL}}/practices/{{practicaId}}/practicantes/{{practicanteId}}/grade
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "calificacion": 7.8,
+  "observaciones": "Buen trabajo general, pero necesita mejorar precisión en los detalles"
+}
+
+### 8.3 ERROR: Calificación fuera de rango
+POST {{baseURL}}/practices/{{practicaId}}/practicantes/{{practicanteId}}/grade
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "calificacion": 11,
+  "observaciones": "Esta calificación es inválida"
+}
+
+### 8.4 ERROR: Practicante intenta calificar
+POST {{baseURL}}/practices/{{practicaId}}/practicantes/{{practicanteId}}/grade
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "calificacion": 10,
+  "observaciones": "No debería poder calificar"
+}
+
+###############################################
+# 9. MIS PRÁCTICAS (Practicante)
+###############################################
+
+### 9.1 Ver mis prácticas asignadas
+GET {{baseURL}}/practices/my-practices
+Authorization: Bearer {{practicanteToken}}
+
+### 9.2 ERROR: Maestro intenta ver "mis prácticas"
+GET {{baseURL}}/practices/my-practices
+Authorization: Bearer {{maestroToken}}
+
+###############################################
+# 10. DISPONIBILIDAD DE MAESTROS - NUEVO B2
+###############################################
+
+### 10.1 Crear disponibilidad Lunes
+POST {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "dia_semana": "lunes",
+  "hora_inicio": "08:00",
+  "hora_fin": "12:00"
+}
+
+### 10.2 Crear disponibilidad Martes
+POST {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "dia_semana": "martes",
+  "hora_inicio": "14:00",
+  "hora_fin": "18:00"
+}
+
+### 10.3 Crear disponibilidad Miércoles - Doble turno
+POST {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "dia_semana": "miercoles",
+  "hora_inicio": "08:00",
+  "hora_fin": "14:00"
+}
+
+### 10.4 ERROR: Horario traslapado
+POST {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "dia_semana": "lunes",
+  "hora_inicio": "10:00",
+  "hora_fin": "15:00"
+}
+
+### 10.5 ERROR: Hora de fin anterior a hora de inicio
+POST {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "dia_semana": "jueves",
+  "hora_inicio": "15:00",
+  "hora_fin": "14:00"
+}
+
+### 10.6 Ver disponibilidad de maestro
+GET {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad
+Authorization: Bearer {{practicanteToken}}
+
+### 10.7 Ver resumen semanal de disponibilidad
+GET {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad/resumen
+Authorization: Bearer {{maestroToken}}
+
+### 10.8 Ver slots disponibles para fecha específica
+GET {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad/slots?fecha=2025-11-03
+Authorization: Bearer {{practicanteToken}}
+
+### 10.9 Actualizar disponibilidad
+PUT {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "hora_inicio": "09:00",
+  "hora_fin": "13:00"
+}
+
+### 10.10 Eliminar disponibilidad (soft delete)
+DELETE {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad/1
+Authorization: Bearer {{maestroToken}}
+
+###############################################
+# 11. ELIMINAR PRÁCTICAS
+###############################################
+
+### 11.1 ERROR: Eliminar práctica con practicantes asignados
+DELETE {{baseURL}}/practices/{{practicaId}}
+Authorization: Bearer {{maestroToken}}
+
+### 11.2 Eliminar práctica sin practicantes (crear una nueva primero)
+DELETE {{baseURL}}/practices/5
+Authorization: Bearer {{maestroToken}}
+
+###############################################
+# 12. CASOS DE PRUEBA AVANZADOS
+###############################################
+
+### 12.1 Crear práctica con cupo mínimo
+POST {{baseURL}}/practices
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "nombre": "Práctica Individual - Caso Especial",
+  "descripcion": "Práctica personalizada para un solo estudiante",
+  "tipo_practica": "Caso Clínico Especial",
+  "duracion_estimada_horas": 5,
+  "cupo_maximo": 1,
+  "fecha_inicio": "2025-11-15",
+  "fecha_fin": "2025-11-30",
+  "nivel_dificultad": "avanzado"
+}
+
+### 12.2 Filtros combinados
+GET {{baseURL}}/practices?estado=activa&nivel_dificultad=basico&page=1&limit=10
+Authorization: Bearer {{practicanteToken}}
+
+### 12.3 Búsqueda con múltiples palabras
+GET {{baseURL}}/practices?search=limpieza dental
+Authorization: Bearer {{maestroToken}}
+
+###############################################
+# FIN DE PRUEBAS SPRINT B2
+###############################################
