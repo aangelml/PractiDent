@@ -1,4 +1,4 @@
-// backend/server.js - VERSION ACTUALIZADA CON PRÁCTICAS
+// backend/server.js - VERSION ACTUALIZADA CON PRÁCTICAS Y CITAS (SPRINT B3)
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -63,6 +63,7 @@ const fs = require('fs');
 const dashboardRoutePath = path.join(__dirname, 'routes', 'dashboard.js');
 const usersRoutePath = path.join(__dirname, 'routes', 'users.js');
 const practicesRoutePath = path.join(__dirname, 'routes', 'practices.js');
+const appointmentsRoutePath = path.join(__dirname, 'routes', 'appointments.js');
 
 if (fs.existsSync(dashboardRoutePath)) {
     try {
@@ -88,7 +89,7 @@ if (fs.existsSync(usersRoutePath)) {
     console.log('⚠️ Archivo routes/users.js no encontrado');
 }
 
-// NUEVA SECCIÓN: Verificar y cargar rutas de prácticas
+// Verificar y cargar rutas de prácticas (SPRINT B2)
 if (fs.existsSync(practicesRoutePath)) {
     try {
         const practicesRoutes = require('./routes/practices');
@@ -99,6 +100,19 @@ if (fs.existsSync(practicesRoutePath)) {
     }
 } else {
     console.log('⚠️ Archivo routes/practices.js no encontrado');
+}
+
+// Verificar y cargar rutas de citas (SPRINT B3) - NUEVO
+if (fs.existsSync(appointmentsRoutePath)) {
+    try {
+        const appointmentsRoutes = require('./routes/appointments');
+        app.use('/api/appointments', appointmentsRoutes);
+        console.log('✅ Rutas de citas cargadas');
+    } catch (error) {
+        console.error('❌ Error cargando rutas de citas:', error.message);
+    }
+} else {
+    console.log('⚠️ Archivo routes/appointments.js no encontrado');
 }
 
 // Health check endpoint
@@ -117,6 +131,7 @@ app.get('/api/health', async (req, res) => {
                 dashboard: fs.existsSync(dashboardRoutePath),
                 userManagement: fs.existsSync(usersRoutePath),
                 practices: fs.existsSync(practicesRoutePath),
+                appointments: fs.existsSync(appointmentsRoutePath), // NUEVO
                 rateLimit: true,
                 cors: true,
                 helmet: true
@@ -203,11 +218,11 @@ const startServer = async () => {
             SELECT TABLE_NAME 
             FROM information_schema.TABLES 
             WHERE TABLE_SCHEMA = ? 
-            AND TABLE_NAME IN ('usuarios', 'practicantes', 'maestros', 'pacientes', 'practicas', 'practicantes_practicas')`,
+            AND TABLE_NAME IN ('usuarios', 'practicantes', 'maestros', 'pacientes', 'practicas', 'practicantes_practicas', 'citas')`,
             [process.env.DB_NAME]
         );
         
-        console.log(`✅ Tablas encontradas: ${tables.length}/6`);
+        console.log(`✅ Tablas encontradas: ${tables.length}/7`);
         
         // Iniciar servidor
         app.listen(PORT, () => {
@@ -253,6 +268,23 @@ const startServer = async () => {
                 console.log('  DELETE /api/practices/:id      - Eliminar práctica (maestros)');
                 console.log('  POST /api/practices/:id/assign - Asignar practicante');
                 console.log('  GET  /api/practices/:id/practicantes - Ver practicantes');
+                console.log('  GET  /api/practices/maestros/:id/disponibilidad - Ver disponibilidad');
+            }
+            
+            if (fs.existsSync(appointmentsRoutePath)) {
+                console.log('\n📌 Endpoints de Citas:');
+                console.log('  GET  /api/appointments                 - Listar citas');
+                console.log('  GET  /api/appointments/statistics      - Estadísticas');
+                console.log('  GET  /api/appointments/available-slots - Horarios disponibles');
+                console.log('  GET  /api/appointments/my-appointments - Mis citas (practicante)');
+                console.log('  GET  /api/appointments/patient/my-appointments - Mis citas (paciente)');
+                console.log('  GET  /api/appointments/:id             - Ver cita');
+                console.log('  POST /api/appointments                 - Crear cita');
+                console.log('  PUT  /api/appointments/:id             - Actualizar cita');
+                console.log('  PATCH /api/appointments/:id/confirm    - Confirmar cita');
+                console.log('  PATCH /api/appointments/:id/cancel     - Cancelar cita');
+                console.log('  PATCH /api/appointments/:id/complete   - Completar cita');
+                console.log('  PATCH /api/appointments/:id/no-show    - Marcar no asistió');
             }
             
             console.log('\n📌 Otros:');

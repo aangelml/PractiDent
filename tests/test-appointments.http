@@ -1,0 +1,553 @@
+###############################################
+# PRACTIDENT - TEST SPRINT B3
+# Sistema de Citas
+###############################################
+
+@baseURL = http://localhost:3000/api
+@contentType = application/json
+
+# Variables de autenticación (actualizar después de login)
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@maestroToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@practicanteToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@pacienteToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# IDs de prueba (actualizar según tus datos)
+@maestroId = 1
+@practicanteId = 1
+@pacienteId = 1
+@practicaId = 1
+@citaId = 1
+
+###############################################
+# 1. AUTENTICACIÓN (Obtener tokens)
+###############################################
+
+### 1.1 Login como Admin
+POST {{baseURL}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@practident.com",
+  "password": "Admin123!"
+}
+
+### 1.2 Login como Maestro
+POST {{baseURL}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "maestro1@practident.com",
+  "password": "Maestro123!"
+}
+
+### 1.3 Login como Practicante
+POST {{baseURL}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "practicante1@practident.com",
+  "password": "Practicante123!"
+}
+
+### 1.4 Login como Paciente
+POST {{baseURL}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "paciente1@practident.com",
+  "password": "Paciente123!"
+}
+
+###############################################
+# 2. CREAR USUARIOS DE PRUEBA (Si no existen)
+###############################################
+
+### 2.1 Registrar Paciente 1
+POST {{baseURL}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "nombre": "María",
+  "apellido": "López",
+  "email": "paciente1@practident.com",
+  "password": "Paciente123!",
+  "tipo_usuario": "paciente",
+  "fecha_nacimiento": "1990-05-15",
+  "telefono": "2281234567",
+  "direccion": "Calle Principal 123, Xalapa, Veracruz"
+}
+
+### 2.2 Registrar Paciente 2
+POST {{baseURL}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "nombre": "José",
+  "apellido": "Ramírez",
+  "email": "paciente2@practident.com",
+  "password": "Paciente123!",
+  "tipo_usuario": "paciente",
+  "fecha_nacimiento": "1985-08-20",
+  "telefono": "2289876543",
+  "direccion": "Avenida Universidad 456, Xalapa, Veracruz"
+}
+
+### 2.3 Registrar Paciente 3
+POST {{baseURL}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Laura",
+  "apellido": "Hernández",
+  "email": "paciente3@practident.com",
+  "password": "Paciente123!",
+  "tipo_usuario": "paciente",
+  "fecha_nacimiento": "1995-12-10",
+  "telefono": "2285551234",
+  "direccion": "Boulevard Xalapa 789, Xalapa, Veracruz",
+  "alergias": "Penicilina",
+  "enfermedades_cronicas": "Diabetes tipo 2"
+}
+
+###############################################
+# 3. VERIFICAR HORARIOS DISPONIBLES
+###############################################
+
+### 3.1 Ver disponibilidad del maestro
+GET {{baseURL}}/practices/maestros/{{maestroId}}/disponibilidad
+Authorization: Bearer {{practicanteToken}}
+
+### 3.2 Ver slots disponibles para fecha específica
+GET {{baseURL}}/appointments/available-slots?practica_id={{practicaId}}&practicante_id={{practicanteId}}&fecha=2025-11-15
+Authorization: Bearer {{practicanteToken}}
+
+### 3.3 Ver slots para diferentes fechas
+GET {{baseURL}}/appointments/available-slots?practica_id={{practicaId}}&practicante_id={{practicanteId}}&fecha=2025-11-18
+Authorization: Bearer {{practicanteToken}}
+
+### 3.4 ERROR: Fecha en el pasado
+GET {{baseURL}}/appointments/available-slots?practica_id={{practicaId}}&practicante_id={{practicanteId}}&fecha=2024-01-01
+Authorization: Bearer {{practicanteToken}}
+
+###############################################
+# 4. CREAR CITAS
+###############################################
+
+### 4.1 Crear cita básica - Limpieza dental
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": {{pacienteId}},
+  "fecha_hora": "2025-11-15T09:00:00",
+  "duracion_minutos": 60,
+  "motivo_consulta": "Limpieza dental general y revisión de rutina. Paciente sin molestias específicas."
+}
+
+### 4.2 Crear cita de urgencia
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": 2,
+  "fecha_hora": "2025-11-15T10:00:00",
+  "duracion_minutos": 90,
+  "motivo_consulta": "Dolor agudo en molar inferior derecho. Posible caries profunda. Requiere atención urgente.",
+  "notas": "Paciente refiere dolor desde hace 3 días, aumenta con bebidas frías"
+}
+
+### 4.3 Crear cita con notas médicas
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": 3,
+  "fecha_hora": "2025-11-15T14:00:00",
+  "duracion_minutos": 60,
+  "motivo_consulta": "Control post-tratamiento de endodoncia. Revisión de evolución y posible remoción de puntos.",
+  "notas": "Paciente alérgica a penicilina. Usar anestesia sin epinefrina. Diabética controlada."
+}
+
+### 4.4 ERROR: Horario ya ocupado
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": {{pacienteId}},
+  "fecha_hora": "2025-11-15T09:00:00",
+  "duracion_minutos": 60,
+  "motivo_consulta": "Esta cita debería fallar por conflicto de horario"
+}
+
+### 4.5 ERROR: Fecha en el pasado
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": {{pacienteId}},
+  "fecha_hora": "2024-01-01T10:00:00",
+  "duracion_minutos": 60,
+  "motivo_consulta": "Esta cita no debería crearse porque la fecha es pasada"
+}
+
+### 4.6 ERROR: Maestro sin disponibilidad
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": {{pacienteId}},
+  "fecha_hora": "2025-11-15T22:00:00",
+  "duracion_minutos": 60,
+  "motivo_consulta": "Intento de cita fuera de horario de disponibilidad"
+}
+
+### 4.7 ERROR: Motivo muy corto
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": {{pacienteId}},
+  "fecha_hora": "2025-11-16T09:00:00",
+  "duracion_minutos": 60,
+  "motivo_consulta": "Corto"
+}
+
+###############################################
+# 5. CONSULTAR CITAS
+###############################################
+
+### 5.1 Listar todas las citas
+GET {{baseURL}}/appointments
+Authorization: Bearer {{maestroToken}}
+
+### 5.2 Listar citas pendientes
+GET {{baseURL}}/appointments?estado=pendiente
+Authorization: Bearer {{maestroToken}}
+
+### 5.3 Listar citas confirmadas
+GET {{baseURL}}/appointments?estado=confirmada
+Authorization: Bearer {{practicanteToken}}
+
+### 5.4 Listar citas por rango de fechas
+GET {{baseURL}}/appointments?fecha_desde=2025-11-01&fecha_hasta=2025-11-30
+Authorization: Bearer {{maestroToken}}
+
+### 5.5 Buscar citas por texto
+GET {{baseURL}}/appointments?search=limpieza
+Authorization: Bearer {{practicanteToken}}
+
+### 5.6 Listar con paginación
+GET {{baseURL}}/appointments?page=1&limit=5
+Authorization: Bearer {{maestroToken}}
+
+### 5.7 Ver cita específica
+GET {{baseURL}}/appointments/{{citaId}}
+Authorization: Bearer {{practicanteToken}}
+
+### 5.8 Ver estadísticas de citas
+GET {{baseURL}}/appointments/statistics
+Authorization: Bearer {{maestroToken}}
+
+### 5.9 Mis citas (practicante)
+GET {{baseURL}}/appointments/my-appointments
+Authorization: Bearer {{practicanteToken}}
+
+### 5.10 Mis citas como paciente
+GET {{baseURL}}/appointments/patient/my-appointments
+Authorization: Bearer {{pacienteToken}}
+
+### 5.11 Filtrar mis citas confirmadas (practicante)
+GET {{baseURL}}/appointments/my-appointments?estado=confirmada
+Authorization: Bearer {{practicanteToken}}
+
+###############################################
+# 6. ACTUALIZAR CITAS
+###############################################
+
+### 6.1 Actualizar fecha/hora de cita
+PUT {{baseURL}}/appointments/{{citaId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "fecha_hora": "2025-11-15T11:00:00",
+  "notas": "Fecha reprogramada a solicitud del paciente"
+}
+
+### 6.2 Actualizar duración
+PUT {{baseURL}}/appointments/{{citaId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "duracion_minutos": 90,
+  "notas": "Se requiere más tiempo por complejidad del caso"
+}
+
+### 6.3 Actualizar motivo y notas
+PUT {{baseURL}}/appointments/{{citaId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "motivo_consulta": "Revisión general y limpieza dental profunda con ultrasonido",
+  "notas": "Paciente presenta acumulación de sarro moderada. Requiere limpieza profunda."
+}
+
+### 6.4 ERROR: Paciente intenta actualizar cita
+PUT {{baseURL}}/appointments/{{citaId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{pacienteToken}}
+
+{
+  "fecha_hora": "2025-11-20T10:00:00"
+}
+
+###############################################
+# 7. CONFIRMAR CITAS
+###############################################
+
+### 7.1 Practicante confirma cita
+PATCH {{baseURL}}/appointments/{{citaId}}/confirm
+Authorization: Bearer {{practicanteToken}}
+
+### 7.2 Maestro confirma cita
+PATCH {{baseURL}}/appointments/2/confirm
+Authorization: Bearer {{maestroToken}}
+
+### 7.3 ERROR: Paciente intenta confirmar
+PATCH {{baseURL}}/appointments/{{citaId}}/confirm
+Authorization: Bearer {{pacienteToken}}
+
+###############################################
+# 8. CANCELAR CITAS
+###############################################
+
+### 8.1 Paciente cancela su cita
+PATCH {{baseURL}}/appointments/{{citaId}}/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{pacienteToken}}
+
+{
+  "motivo": "Surge compromiso familiar urgente. Necesito reprogramar para la próxima semana."
+}
+
+### 8.2 Practicante cancela cita
+PATCH {{baseURL}}/appointments/2/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "motivo": "Paciente llamó para cancelar por enfermedad (gripe). Reprogramar cuando se recupere."
+}
+
+### 8.3 Maestro cancela cita
+PATCH {{baseURL}}/appointments/3/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "motivo": "Práctica suspendida por capacitación urgente del equipo docente."
+}
+
+### 8.4 ERROR: Cancelar sin motivo
+PATCH {{baseURL}}/appointments/{{citaId}}/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "motivo": ""
+}
+
+### 8.5 ERROR: Cancelar cita ya completada
+PATCH {{baseURL}}/appointments/5/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "motivo": "Intento de cancelar cita completada"
+}
+
+###############################################
+# 9. COMPLETAR CITAS
+###############################################
+
+### 9.1 Practicante completa cita - Limpieza exitosa
+PATCH {{baseURL}}/appointments/{{citaId}}/complete
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "tratamiento_realizado": "Limpieza dental completa realizada exitosamente. Se utilizó ultrasonido para eliminación de sarro. Pulido dental con pasta profiláctica. Se aplicó flúor tópico. Paciente educado sobre técnica de cepillado correcta. No se detectaron caries. Encías en buen estado. Se recomienda revisión en 6 meses."
+}
+
+### 9.2 Practicante completa cita - Caso complejo
+PATCH {{baseURL}}/appointments/2/complete
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "tratamiento_realizado": "Tratamiento de conducto en molar inferior derecho (pieza 46). Se realizó apertura cameral, localización de conductos, instrumentación y obturación. Se utilizó anestesia local lidocaína 2%. Paciente toleró bien el procedimiento. Se colocó restauración temporal. Se prescribe: Ibuprofeno 400mg cada 8 horas por 3 días. Control en 1 semana para evaluación y restauración definitiva. Advertir sobre molestias post-tratamiento normales."
+}
+
+### 9.3 Maestro completa cita supervisada
+PATCH {{baseURL}}/appointments/3/complete
+Content-Type: {{contentType}}
+Authorization: Bearer {{maestroToken}}
+
+{
+  "tratamiento_realizado": "Control post-endodoncia realizado. Paciente asintomático. Radiografía de control muestra obturación adecuada. Se retiraron puntos de sutura. Zona en buena cicatrización. Se realizó limpieza y pulido. No se observan complicaciones. Alta del tratamiento endodóntico. Paciente satisfecho con resultado. Se recomienda continuar con higiene rigurosa y control general en 6 meses."
+}
+
+### 9.4 ERROR: Completar sin tratamiento
+PATCH {{baseURL}}/appointments/{{citaId}}/complete
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "tratamiento_realizado": ""
+}
+
+### 9.5 ERROR: Paciente intenta completar cita
+PATCH {{baseURL}}/appointments/{{citaId}}/complete
+Content-Type: {{contentType}}
+Authorization: Bearer {{pacienteToken}}
+
+{
+  "tratamiento_realizado": "No debería poder completar"
+}
+
+###############################################
+# 10. MARCAR COMO NO ASISTIÓ
+###############################################
+
+### 10.1 Practicante marca no asistió
+PATCH {{baseURL}}/appointments/4/no-show
+Authorization: Bearer {{practicanteToken}}
+
+### 10.2 Maestro marca no asistió
+PATCH {{baseURL}}/appointments/5/no-show
+Authorization: Bearer {{maestroToken}}
+
+### 10.3 ERROR: Paciente intenta marcar
+PATCH {{baseURL}}/appointments/{{citaId}}/no-show
+Authorization: Bearer {{pacienteToken}}
+
+###############################################
+# 11. FLUJO COMPLETO DE CITA
+###############################################
+
+### 11.1 PASO 1: Verificar disponibilidad
+GET {{baseURL}}/appointments/available-slots?practica_id={{practicaId}}&practicante_id={{practicanteId}}&fecha=2025-11-20
+Authorization: Bearer {{practicanteToken}}
+
+### 11.2 PASO 2: Crear cita
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": {{pacienteId}},
+  "fecha_hora": "2025-11-20T09:00:00",
+  "duracion_minutos": 60,
+  "motivo_consulta": "Extracción de tercer molar inferior izquierdo impactado. Paciente refiere dolor intermitente."
+}
+
+### 11.3 PASO 3: Confirmar cita
+PATCH {{baseURL}}/appointments/6/confirm
+Authorization: Bearer {{practicanteToken}}
+
+### 11.4 PASO 4: Ver detalles antes de la cita
+GET {{baseURL}}/appointments/6
+Authorization: Bearer {{practicanteToken}}
+
+### 11.5 PASO 5: Completar cita con tratamiento
+PATCH {{baseURL}}/appointments/6/complete
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "tratamiento_realizado": "Extracción quirúrgica de tercer molar inferior izquierdo (pieza 38). Anestesia troncular del nervio dentario inferior. Incisión y colgajo mucoperióstico. Osteotomía con pieza de mano de alta velocidad. Odontosección en dos fragmentos. Extracción de restos radiculares. Legrado alveolar. Sutura con seda 3-0, 3 puntos. Hemostasia adecuada. Prescripción: Amoxicilina 500mg c/8h por 7 días, Ketorolaco 10mg c/8h por 3 días, enjuagues con clorhexidina 0.12%. Control en 7 días para retiro de puntos. Paciente con signos vitales estables al término del procedimiento."
+}
+
+###############################################
+# 12. CASOS DE PRUEBA ESPECIALES
+###############################################
+
+### 12.1 Múltiples citas mismo día diferentes horarios
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": 2,
+  "fecha_hora": "2025-11-21T08:00:00",
+  "duracion_minutos": 60,
+  "motivo_consulta": "Primera cita del día - Restauración de amalgama en premolar superior"
+}
+
+### 12.2 Segunda cita del mismo día
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": 3,
+  "fecha_hora": "2025-11-21T10:00:00",
+  "duracion_minutos": 60,
+  "motivo_consulta": "Segunda cita del día - Control post-tratamiento ortodóntico"
+}
+
+### 12.3 Cita con duración extendida (2 horas)
+POST {{baseURL}}/appointments
+Content-Type: {{contentType}}
+Authorization: Bearer {{practicanteToken}}
+
+{
+  "practica_id": {{practicaId}},
+  "practicante_id": {{practicanteId}},
+  "paciente_id": {{pacienteId}},
+  "fecha_hora": "2025-11-22T09:00:00",
+  "duracion_minutos": 120,
+  "motivo_consulta": "Cirugía compleja: Extracción de múltiples piezas dentales y colocación de implantes. Requiere tiempo extendido."
+}
+
+### 12.4 Filtros combinados avanzados
+GET {{baseURL}}/appointments?estado=completada&fecha_desde=2025-11-01&fecha_hasta=2025-11-30&page=1&limit=10
+Authorization: Bearer {{maestroToken}}
+
+### 12.5 Estadísticas filtradas por practicante
+GET {{baseURL}}/appointments/statistics
+Authorization: Bearer {{practicanteToken}}
+
+###############################################
+# FIN DE PRUEBAS SPRINT B3
+###############################################

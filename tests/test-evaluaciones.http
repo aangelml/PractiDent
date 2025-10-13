@@ -1,0 +1,388 @@
+### ============================================
+### PRACTIDENT - TEST SPRINT B4: EVALUACIONES
+### Sistema de Evaluaciones Bidireccionales
+### ============================================
+
+### VARIABLES GLOBALES
+@baseUrl = http://localhost:3000/api
+@adminToken = TU_ADMIN_TOKEN_AQUI
+@maestroToken = TU_MAESTRO_TOKEN_AQUI
+@practicanteToken = TU_PRACTICANTE_TOKEN_AQUI
+@pacienteToken = TU_PACIENTE_TOKEN_AQUI
+
+### ============================================
+### 1. OBTENER ESTADÍSTICAS DE EVALUACIONES
+### ============================================
+
+### 1.1 Estadísticas generales (Admin)
+GET {{baseUrl}}/evaluations/statistics
+Authorization: Bearer {{adminToken}}
+
+### 1.2 Estadísticas del practicante (Practicante)
+GET {{baseUrl}}/evaluations/statistics
+Authorization: Bearer {{practicanteToken}}
+
+### 1.3 Estadísticas del maestro (Maestro)
+GET {{baseUrl}}/evaluations/statistics
+Authorization: Bearer {{maestroToken}}
+
+### ============================================
+### 2. OBTENER CITAS PENDIENTES DE EVALUAR
+### ============================================
+
+### 2.1 Citas pendientes (Maestro)
+GET {{baseUrl}}/evaluations/pending
+Authorization: Bearer {{maestroToken}}
+
+### 2.2 Citas pendientes (Paciente)
+GET {{baseUrl}}/evaluations/pending
+Authorization: Bearer {{pacienteToken}}
+
+### 2.3 Error: Practicante no puede ver pendientes
+GET {{baseUrl}}/evaluations/pending
+Authorization: Bearer {{practicanteToken}}
+
+### ============================================
+### 3. CREAR EVALUACIÓN MAESTRO → PRACTICANTE
+### ============================================
+
+### 3.1 Crear evaluación exitosa (Maestro)
+POST {{baseUrl}}/evaluations/maestro-practicante
+Authorization: Bearer {{maestroToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 1,
+  "evaluado_id": 2,
+  "calificacion": 5,
+  "comentarios": "Excelente desempeño durante la práctica. El practicante demostró gran habilidad técnica y empatía con el paciente.",
+  "aspectos_positivos": "Dominio de técnicas, comunicación efectiva, puntualidad",
+  "aspectos_mejorar": "Podría mejorar en la documentación del expediente"
+}
+
+### 3.2 Error: Cita no completada
+POST {{baseUrl}}/evaluations/maestro-practicante
+Authorization: Bearer {{maestroToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 2,
+  "evaluado_id": 2,
+  "calificacion": 4,
+  "comentarios": "Buen desempeño general"
+}
+
+### 3.3 Error: Evaluación duplicada
+POST {{baseUrl}}/evaluations/maestro-practicante
+Authorization: Bearer {{maestroToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 1,
+  "evaluado_id": 2,
+  "calificacion": 5,
+  "comentarios": "Segunda evaluación de la misma cita"
+}
+
+### 3.4 Error: Sin comentarios (campo obligatorio)
+POST {{baseUrl}}/evaluations/maestro-practicante
+Authorization: Bearer {{maestroToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 1,
+  "evaluado_id": 2,
+  "calificacion": 5
+}
+
+### 3.5 Error: Calificación fuera de rango
+POST {{baseUrl}}/evaluations/maestro-practicante
+Authorization: Bearer {{maestroToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 1,
+  "evaluado_id": 2,
+  "calificacion": 6,
+  "comentarios": "Evaluación con calificación inválida"
+}
+
+### 3.6 Error: Paciente no puede evaluar como maestro
+POST {{baseUrl}}/evaluations/maestro-practicante
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 1,
+  "evaluado_id": 2,
+  "calificacion": 5,
+  "comentarios": "Intento de evaluación por paciente"
+}
+
+### ============================================
+### 4. CREAR EVALUACIÓN PACIENTE → SERVICIO
+### ============================================
+
+### 4.1 Crear evaluación exitosa (Paciente)
+POST {{baseUrl}}/evaluations/paciente-servicio
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 1,
+  "evaluado_id": 2,
+  "calificacion": 5,
+  "comentarios": "Muy satisfecho con la atención recibida. El practicante fue muy amable y profesional.",
+  "aspectos_positivos": "Excelente trato, explicaciones claras"
+}
+
+### 4.2 Evaluación sin comentarios (opcional para pacientes)
+POST {{baseUrl}}/evaluations/paciente-servicio
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 3,
+  "evaluado_id": 2,
+  "calificacion": 4
+}
+
+### 4.3 Error: Maestro no puede evaluar como paciente
+POST {{baseUrl}}/evaluations/paciente-servicio
+Authorization: Bearer {{maestroToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 1,
+  "evaluado_id": 2,
+  "calificacion": 5,
+  "comentarios": "Intento de maestro"
+}
+
+### 4.4 Error: Cita no completada
+POST {{baseUrl}}/evaluations/paciente-servicio
+Authorization: Bearer {{pacienteToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 5,
+  "evaluado_id": 2,
+  "calificacion": 5,
+  "comentarios": "Cita pendiente o confirmada"
+}
+
+### ============================================
+### 5. CONSULTAR EVALUACIONES
+### ============================================
+
+### 5.1 Listar todas las evaluaciones (Admin)
+GET {{baseUrl}}/evaluations
+Authorization: Bearer {{adminToken}}
+
+### 5.2 Listar con paginación
+GET {{baseUrl}}/evaluations?page=1&limit=5
+Authorization: Bearer {{adminToken}}
+
+### 5.3 Filtrar por tipo de evaluación
+GET {{baseUrl}}/evaluations?tipo=maestro_practicante
+Authorization: Bearer {{adminToken}}
+
+### 5.4 Filtrar por calificación mínima
+GET {{baseUrl}}/evaluations?calificacion_min=4
+Authorization: Bearer {{adminToken}}
+
+### 5.5 Filtrar por rango de calificación
+GET {{baseUrl}}/evaluations?calificacion_min=3&calificacion_max=5
+Authorization: Bearer {{adminToken}}
+
+### 5.6 Mis evaluaciones realizadas (Maestro)
+GET {{baseUrl}}/evaluations/my-evaluations
+Authorization: Bearer {{maestroToken}}
+
+### 5.7 Mis evaluaciones realizadas (Paciente)
+GET {{baseUrl}}/evaluations/my-evaluations
+Authorization: Bearer {{pacienteToken}}
+
+### 5.8 Evaluaciones recibidas (Practicante)
+GET {{baseUrl}}/evaluations/received
+Authorization: Bearer {{practicanteToken}}
+
+### ============================================
+### 6. EVALUACIONES POR PRACTICANTE
+### ============================================
+
+### 6.1 Ver evaluaciones de practicante específico (Admin)
+GET {{baseUrl}}/evaluations/practicante/2
+Authorization: Bearer {{adminToken}}
+
+### 6.2 Ver evaluaciones de practicante específico (Maestro)
+GET {{baseUrl}}/evaluations/practicante/2
+Authorization: Bearer {{maestroToken}}
+
+### 6.3 Practicante ve sus propias evaluaciones
+GET {{baseUrl}}/evaluations/practicante/2
+Authorization: Bearer {{practicanteToken}}
+
+### 6.4 Error: Practicante intenta ver evaluaciones de otro
+GET {{baseUrl}}/evaluations/practicante/3
+Authorization: Bearer {{practicanteToken}}
+
+### ============================================
+### 7. EVALUACIONES POR CITA
+### ============================================
+
+### 7.1 Ver evaluaciones de una cita (Admin)
+GET {{baseUrl}}/evaluations/by-cita/1
+Authorization: Bearer {{adminToken}}
+
+### 7.2 Ver evaluaciones de cita (Maestro)
+GET {{baseUrl}}/evaluations/by-cita/1
+Authorization: Bearer {{maestroToken}}
+
+### 7.3 Ver evaluaciones de cita (Practicante)
+GET {{baseUrl}}/evaluations/by-cita/1
+Authorization: Bearer {{practicanteToken}}
+
+### 7.4 Ver evaluaciones de cita (Paciente)
+GET {{baseUrl}}/evaluations/by-cita/1
+Authorization: Bearer {{pacienteToken}}
+
+### 7.5 Error: Usuario sin relación con la cita
+GET {{baseUrl}}/evaluations/by-cita/99
+Authorization: Bearer {{pacienteToken}}
+
+### ============================================
+### 8. VER EVALUACIÓN ESPECÍFICA
+### ============================================
+
+### 8.1 Ver evaluación por ID (Admin)
+GET {{baseUrl}}/evaluations/1
+Authorization: Bearer {{adminToken}}
+
+### 8.2 Ver evaluación por ID (Evaluador)
+GET {{baseUrl}}/evaluations/1
+Authorization: Bearer {{maestroToken}}
+
+### 8.3 Ver evaluación por ID (Evaluado)
+GET {{baseUrl}}/evaluations/1
+Authorization: Bearer {{practicanteToken}}
+
+### 8.4 Error: Evaluación no encontrada
+GET {{baseUrl}}/evaluations/9999
+Authorization: Bearer {{adminToken}}
+
+### 8.5 Error: Sin permisos para ver evaluación
+GET {{baseUrl}}/evaluations/1
+Authorization: Bearer {{pacienteToken}}
+
+### ============================================
+### 9. ELIMINAR EVALUACIÓN (SOLO ADMIN)
+### ============================================
+
+### 9.1 Eliminar evaluación (Admin)
+DELETE {{baseUrl}}/evaluations/1
+Authorization: Bearer {{adminToken}}
+
+### 9.2 Error: Maestro no puede eliminar
+DELETE {{baseUrl}}/evaluations/1
+Authorization: Bearer {{maestroToken}}
+
+### 9.3 Error: Practicante no puede eliminar
+DELETE {{baseUrl}}/evaluations/1
+Authorization: Bearer {{practicanteToken}}
+
+### 9.4 Error: Paciente no puede eliminar
+DELETE {{baseUrl}}/evaluations/1
+Authorization: Bearer {{pacienteToken}}
+
+### ============================================
+### 10. CASOS DE PRUEBA COMPLETOS
+### ============================================
+
+### 10.1 Flujo completo: Maestro evalúa practicante
+# 1. Ver citas pendientes
+# 2. Crear evaluación
+# 3. Verificar que ya no aparece en pendientes
+# 4. Ver la evaluación creada
+
+### 10.2 Flujo completo: Paciente evalúa servicio
+# 1. Ver citas pendientes
+# 2. Crear evaluación
+# 3. Verificar que ya no aparece en pendientes
+
+### 10.3 Flujo completo: Practicante ve sus evaluaciones
+# 1. Ver estadísticas
+# 2. Ver evaluaciones recibidas
+# 3. Verificar promedios
+
+### ============================================
+### 11. VALIDACIONES Y ERRORES
+### ============================================
+
+### 11.1 Error: Sin token de autenticación
+GET {{baseUrl}}/evaluations
+
+### 11.2 Error: Token inválido
+GET {{baseUrl}}/evaluations
+Authorization: Bearer token_invalido
+
+### 11.3 Error: Evaluación sin cita_id
+POST {{baseUrl}}/evaluations/maestro-practicante
+Authorization: Bearer {{maestroToken}}
+Content-Type: application/json
+
+{
+  "evaluado_id": 2,
+  "calificacion": 5,
+  "comentarios": "Sin cita ID"
+}
+
+### 11.4 Error: Calificación no numérica
+POST {{baseUrl}}/evaluations/maestro-practicante
+Authorization: Bearer {{maestroToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 1,
+  "evaluado_id": 2,
+  "calificacion": "cinco",
+  "comentarios": "Calificación textual"
+}
+
+### 11.5 Error: Comentarios muy cortos (maestro)
+POST {{baseUrl}}/evaluations/maestro-practicante
+Authorization: Bearer {{maestroToken}}
+Content-Type: application/json
+
+{
+  "cita_id": 1,
+  "evaluado_id": 2,
+  "calificacion": 5,
+  "comentarios": "Bien"
+}
+
+### ============================================
+### 12. ESTADÍSTICAS Y REPORTES
+### ============================================
+
+### 12.1 Estadísticas con promedios
+GET {{baseUrl}}/evaluations/statistics
+Authorization: Bearer {{adminToken}}
+
+### 12.2 Evaluaciones filtradas por calificación alta
+GET {{baseUrl}}/evaluations?calificacion_min=4&tipo=maestro_practicante
+Authorization: Bearer {{adminToken}}
+
+### 12.3 Evaluaciones de servicio con calificación baja
+GET {{baseUrl}}/evaluations?calificacion_max=2&tipo=paciente_servicio
+Authorization: Bearer {{adminToken}}
+
+### ============================================
+### NOTAS DE PRUEBA:
+### 
+### 1. Reemplazar los tokens con tokens reales obtenidos del login
+### 2. Ajustar los IDs según tus datos de prueba
+### 3. Asegurarse de tener citas completadas antes de evaluar
+### 4. Los practicantes deben estar asignados a prácticas activas
+### 5. Cada evaluación es única por cita y tipo
+### ============================================
