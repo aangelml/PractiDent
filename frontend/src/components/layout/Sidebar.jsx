@@ -75,7 +75,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-xl
+          fixed top-16 left-0 z-50 h-[calc(100vh-4rem)] w-64 bg-white shadow-xl overflow-y-auto
           transform transition-transform duration-300 ease-in-out
           lg:translate-x-0 lg:static lg:z-30
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -98,7 +98,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* Menu Items */}
-        <nav className="p-4 space-y-2 mt-16 lg:mt-0">
+        <nav className="p-4 space-y-2">
           {currentMenu.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -125,7 +125,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         {/* Footer del Sidebar */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
           <div className="text-xs text-gray-500 text-center">
             <p>PRACTIDENT v1.0</p>
             <p className="mt-1">© 2025 Todos los derechos reservados</p>

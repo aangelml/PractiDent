@@ -16,8 +16,9 @@ app.use(helmet({
     contentSecurityPolicy: false
 }));
 
+// CORS - CONFIGURACIÓN CORREGIDA PARA FRONTEND EN PUERTO 5173
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:8080',
+    origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8080'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -131,7 +132,7 @@ app.get('/api/health', async (req, res) => {
                 dashboard: fs.existsSync(dashboardRoutePath),
                 userManagement: fs.existsSync(usersRoutePath),
                 practices: fs.existsSync(practicesRoutePath),
-                appointments: fs.existsSync(appointmentsRoutePath), // NUEVO
+                appointments: fs.existsSync(appointmentsRoutePath),
                 rateLimit: true,
                 cors: true,
                 helmet: true
@@ -234,6 +235,7 @@ const startServer = async () => {
             console.log(`📡 API Base: http://localhost:${PORT}/api`);
             console.log(`🔧 Ambiente: ${process.env.NODE_ENV || 'development'}`);
             console.log(`🗄️  Base de datos: ${process.env.DB_NAME}`);
+            console.log(`✅ CORS habilitado para: localhost:3000, localhost:5173, localhost:8080`);
             console.log('='.repeat(60));
             console.log('\n📌 Endpoints disponibles:');
             console.log('  POST /api/auth/register        - Registro de usuarios');
