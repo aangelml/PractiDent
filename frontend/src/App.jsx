@@ -1,28 +1,28 @@
-import { Routes, Route, Navigate, Link } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from './hooks/useAuth.js';
 
 // Layout
-import Layout from './components/layout/Layout';
+import Layout from './components/layout/Layout.jsx';
 
 // Auth Components
-import PrivateRoute from './components/auth/PrivateRoute';
-import RoleRoute from './components/auth/RoleRoute';
+import PrivateRoute from './components/auth/PrivateRoute.jsx';
+import RoleRoute from './components/auth/RoleRoute.jsx';
 
 // Pages
-import Home from './pages/Home';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import AdminDashboard from './pages/dashboard/AdminDashboard';
-import MaestroDashboard from './pages/dashboard/MaestroDashboard';
-import PracticanteDashboard from './pages/dashboard/PracticanteDashboard';
-import PacienteDashboard from './pages/dashboard/PacienteDashboard';
+import Home from './pages/Home.jsx';
+import Login from './pages/auth/Login.jsx';
+import Register from './pages/auth/Register.jsx';
+import AdminDashboard from './pages/dashboard/AdminDashboard.jsx';
+import MaestroDashboard from './pages/dashboard/MaestroDashboard.jsx';
+import PracticanteDashboard from './pages/dashboard/PracticanteDashboard.jsx';
+import PacienteDashboard from './pages/dashboard/PacienteDashboard.jsx';
 
 // Components
-import Loader from './components/ui/Loader';
+import Loader from './components/ui/Loader.jsx';
 
 // Constants
-import { ROLES } from './utils/constants';
+import { ROLES } from './utils/constants.js';
 
 function App() {
   const { loading } = useAuth();
@@ -132,7 +132,7 @@ function App() {
                 </p>
                 <Link
                   to="/"
-                  className="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  className="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
                 >
                   Volver al Inicio
                 </Link>
@@ -156,7 +156,7 @@ function App() {
                 </p>
                 <Link
                   to="/"
-                  className="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  className="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
                 >
                   Volver al Inicio
                 </Link>
