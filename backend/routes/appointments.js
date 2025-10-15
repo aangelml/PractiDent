@@ -1,6 +1,6 @@
-// backend/routes/appointments.js - NUEVO SPRINT B3
+// backend/routes/appointments.js - COMPLETO SPRINT B3
 const router = require('express').Router();
-const { authenticate } = require('../middleware/authSimple');
+const authSimple = require('../middleware/authSimple');
 const { authorize } = require('../middleware/roleAuth');
 const appointmentsController = require('../controllers/appointmentsController');
 const {
@@ -16,7 +16,7 @@ const {
 // ============================================
 // TODAS LAS RUTAS REQUIEREN AUTENTICACIÓN
 // ============================================
-router.use(authenticate);
+router.use(authSimple);
 
 // ============================================
 // RUTAS DE CONSULTA
@@ -59,7 +59,7 @@ router.get('/:id',
 // RUTAS DE CREACIÓN Y MODIFICACIÓN
 // ============================================
 
-// Crear nueva cita (practicantes y admin)
+// Crear nueva cita (practicantes, maestros y admin)
 router.post('/',
     authorize('practicante', 'admin', 'maestro'),
     validateCreateAppointment,

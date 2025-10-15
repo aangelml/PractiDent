@@ -1,6 +1,6 @@
 // backend/routes/practices.js - ACTUALIZADO SPRINT B2
 const router = require('express').Router();
-const { authenticate } = require('../middleware/authSimple');
+const authSimple = require('../middleware/authSimple');
 const { authorize } = require('../middleware/roleAuth');
 const practicesController = require('../controllers/practicesController');
 const maestroAvailabilityController = require('../controllers/maestroAvailabilityController');
@@ -19,7 +19,7 @@ const {
 // ============================================
 // RUTAS PÚBLICAS (requieren autenticación)
 // ============================================
-router.use(authenticate);
+router.use(authSimple);
 
 // ============================================
 // RUTAS DE PRÁCTICAS
