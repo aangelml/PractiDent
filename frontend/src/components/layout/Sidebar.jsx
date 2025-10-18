@@ -22,7 +22,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const menuItems = {
     [ROLES.ADMIN]: [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard/admin' },
-      { icon: Users, label: 'Usuarios', path: '/usuarios' },
+      { icon: Users, label: 'Gestión de Usuarios', path: '/usuarios' },
       { icon: GraduationCap, label: 'Practicantes', path: '/practicantes' },
       { icon: Stethoscope, label: 'Maestros', path: '/maestros' },
       { icon: UserCog, label: 'Pacientes', path: '/pacientes' },
@@ -59,7 +59,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const currentMenu = menuItems[userRole] || [];
 
   const isActive = (path) => {
-    return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   return (

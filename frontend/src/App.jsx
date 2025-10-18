@@ -18,6 +18,11 @@ import MaestroDashboard from './pages/dashboard/MaestroDashboard.jsx';
 import PracticanteDashboard from './pages/dashboard/PracticanteDashboard.jsx';
 import PacienteDashboard from './pages/dashboard/PacienteDashboard.jsx';
 
+// Users Pages (SPRINT F2)
+import UsersList from './pages/users/UsersList.jsx';
+import CreateUser from './pages/users/CreateUser.jsx';
+import UserDetail from './pages/users/UserDetail.jsx';
+
 // Components
 import Loader from './components/ui/Loader.jsx';
 
@@ -111,6 +116,46 @@ function App() {
               <RoleRoute allowedRoles={[ROLES.PACIENTE]}>
                 <Layout>
                   <PacienteDashboard />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        {/* RUTAS SPRINT F2 - CRUD DE USUARIOS (Solo Admin) */}
+        <Route
+          path="/usuarios"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+                <Layout>
+                  <UsersList />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/usuarios/nuevo"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+                <Layout>
+                  <CreateUser />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/usuarios/:id"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+                <Layout>
+                  <UserDetail />
                 </Layout>
               </RoleRoute>
             </PrivateRoute>

@@ -1,11 +1,12 @@
 import { forwardRef } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 const Select = forwardRef(({ 
   label,
   error,
   helper,
+  placeholder = 'Selecciona una opcion',
   options = [],
-  placeholder = 'Selecciona una opción',
   disabled = false,
   required = false,
   fullWidth = true,
@@ -17,8 +18,7 @@ const Select = forwardRef(({
     block w-full px-4 py-2.5 text-gray-900 bg-white border rounded-lg
     focus:ring-2 focus:ring-primary focus:border-transparent
     disabled:bg-gray-100 disabled:cursor-not-allowed
-    transition-colors duration-200
-    appearance-none cursor-pointer
+    transition-colors duration-200 appearance-none
     ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}
     ${className}
   `;
@@ -41,17 +41,16 @@ const Select = forwardRef(({
         >
           <option value="">{placeholder}</option>
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option 
+              key={option.value} 
+              value={option.value}
+            >
               {option.label}
             </option>
           ))}
         </select>
         
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
       </div>
 
       {helper && !error && (
