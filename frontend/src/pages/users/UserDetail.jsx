@@ -68,10 +68,10 @@ const UserDetail = () => {
     }
   };
 
-  const handleResetPassword = async () => {
+ const handleResetPassword = async () => {
     try {
       setResettingPassword(true);
-      toast.info('Funcion en desarrollo - Contacta al administrador');
+      toast.success('Funcion en desarrollo - Contacta al administrador');
       setResetModal(false);
     } catch (error) {
       console.error('Error resetting password:', error);

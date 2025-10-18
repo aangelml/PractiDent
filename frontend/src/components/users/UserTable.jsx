@@ -35,35 +35,35 @@ const UserTable = ({
         </a>
       )
     },
-    {
-      key: 'tipo_usuario',
-      label: 'Tipo',
-      sortable: true,
-      render: (value) => (
-        <Badge
-          text={value.charAt(0).toUpperCase() + value.slice(1)}
-          variant={
-            value === 'admin' ? 'danger' :
-            value === 'maestro' ? 'info' :
-            value === 'practicante' ? 'success' :
-            'default'
-          }
-          size="sm"
-        />
-      )
-    },
-    {
-      key: 'estado',
-      label: 'Estado',
-      sortable: true,
-      render: (value) => (
-        <Badge
-          text={value.charAt(0).toUpperCase() + value.slice(1)}
-          variant={value}
-          size="sm"
-        />
-      )
-    },
+{
+  key: 'tipo_usuario',
+  label: 'Tipo',
+  sortable: true,
+  render: (value) => (
+    <Badge
+      text={value ? value.charAt(0).toUpperCase() + value.slice(1) : 'N/A'}
+      variant={
+        value === 'admin' ? 'danger' :
+        value === 'maestro' ? 'info' :
+        value === 'practicante' ? 'success' :
+        'default'
+      }
+      size="sm"
+    />
+  )
+},
+{
+  key: 'estado',
+  label: 'Estado',
+  sortable: true,
+  render: (value) => (
+    <Badge
+      text={value ? value.charAt(0).toUpperCase() + value.slice(1) : 'N/A'}
+      variant={value || 'default'}
+      size="sm"
+    />
+  )
+},
     {
       key: 'telefono',
       label: 'Telefono',

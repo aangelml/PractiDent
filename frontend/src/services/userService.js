@@ -1,33 +1,41 @@
 import api from './api';
 
 const userService = {
-  async getAll(filters = {}) {
-    try {
-      const { tipo_usuario, estado, search, page = 1, limit = 10 } = filters;
-      
-      const params = new URLSearchParams();
-      if (tipo_usuario) params.append('tipo_usuario', tipo_usuario);
-      if (estado) params.append('estado', estado);
-      if (search) params.append('search', search);
-      params.append('page', page);
-      params.append('limit', limit);
+async getAll(filters = {}) {
+  try {
+    const { tipo_usuario, estado, search, page = 1, limit = 10 } = filters;
+    
+    const params = new URLSearchParams();
+    if (tipo_usuario) params.append('tipo_usuario', tipo_usuario);
+    if (estado) params.append('estado', estado);
+    if (search) params.append('search', search);
+    params.append('page', page);
+    params.append('limit', limit);
 
-      const response = await api.get(`/users?${params.toString()}`);
-      
-      return {
-        success: true,
-        data: response.data.data || response.data,
-        pagination: response.data.pagination || {},
-        total: response.data.total || 0
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Error al obtener usuarios',
-        error: error.response?.data?.error
-      };
-    }
-  },
+    const response = await api.get(`/users?${params.toString()}`);
+    
+    console.log('Raw response:', response.data);
+    
+    // El backend devuelve { success: true, data: [...usuarios], total: X }
+    const data = response.data.data || response.data;
+    const users = Array.isArray(data) ? data : (data.users || []);
+    const total = response.data.total || users.length;
+
+    return {
+      success: true,
+      data: users,
+      pagination: response.data.pagination || {},
+      total: total
+    };
+  } catch (error) {
+    console.error('UserService error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Error al obtener usuarios',
+      error: error.response?.data?.error
+    };
+  }
+},
 
   async getById(id) {
     try {

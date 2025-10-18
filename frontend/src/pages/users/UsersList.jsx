@@ -32,28 +32,33 @@ const UsersList = () => {
     loadUsers();
   }, [currentPage, itemsPerPage, filters, sortBy, sortOrder]);
 
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      const result = await userService.getAll({
-        ...filters,
-        page: currentPage,
-        limit: itemsPerPage
-      });
+ const loadUsers = async () => {
+  try {
+    setLoading(true);
+    const result = await userService.getAll({
+      ...filters,
+      page: currentPage,
+      limit: itemsPerPage
+    });
 
-      if (result.success) {
-        setUsers(result.data || []);
-        setTotalPages(Math.ceil((result.total || 0) / itemsPerPage));
-      } else {
-        toast.error(result.message || 'Error al cargar usuarios');
-      }
-    } catch (error) {
-      console.error('Error loading users:', error);
-      toast.error('Error al cargar usuarios');
-    } finally {
-      setLoading(false);
+    console.log('=== FULL RESPONSE ===', result);
+    console.log('result.data:', result.data);
+    console.log('result.total:', result.total);
+    console.log('Is array?', Array.isArray(result.data));
+
+    if (result.success) {
+      setUsers(Array.isArray(result.data) ? result.data : []);
+      setTotalPages(Math.ceil((result.total || 0) / itemsPerPage));
+    } else {
+      toast.error(result.message || 'Error al cargar usuarios');
     }
-  };
+  } catch (error) {
+    console.error('Error loading users:', error);
+    toast.error('Error al cargar usuarios');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
@@ -93,35 +98,36 @@ const UsersList = () => {
     setDeleteModal(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!userToDelete) return;
+const handleConfirmDelete = async () => {
+  if (!userToDelete) return;
 
-    try {
-      setDeleting(true);
-      const result = await userService.delete(userToDelete);
+  try {
+    setDeleting(true);
+    const result = await userService.delete(userToDelete);
 
-      if (result.success) {
-        toast.success(result.message || 'Usuario eliminado exitosamente');
-        setDeleteModal(false);
-        setUserToDelete(null);
-        loadUsers();
-      } else {
-        toast.error(result.message || 'Error al eliminar usuario');
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error('Error al eliminar usuario');
-    } finally {
-      setDeleting(false);
+    if (result.success) {
+      toast.success(result.message || 'Usuario eliminado exitosamente');
+      setDeleteModal(false);
+      setUserToDelete(null);
+      setCurrentPage(1);  // ← Vuelve a página 1
+      setTimeout(() => loadUsers(), 500);  // ← Espera 500ms y recarga
+    } else {
+      toast.error(result.message || 'Error al eliminar usuario');
     }
-  };
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    toast.error('Error al eliminar usuario');
+  } finally {
+    setDeleting(false);
+  }
+};
 
-  const stats = {
-    total: users.length,
-    practicantes: users.filter(u => u.tipo_usuario === 'practicante').length,
-    maestros: users.filter(u => u.tipo_usuario === 'maestro').length,
-    pacientes: users.filter(u => u.tipo_usuario === 'paciente').length
-  };
+const stats = {
+  total: Array.isArray(users) ? users.length : 0,
+  practicantes: Array.isArray(users) ? users.filter(u => u.tipo_usuario === 'practicante').length : 0,
+  maestros: Array.isArray(users) ? users.filter(u => u.tipo_usuario === 'maestro').length : 0,
+  pacientes: Array.isArray(users) ? users.filter(u => u.tipo_usuario === 'paciente').length : 0
+};
 
   return (
     <div className="space-y-6">
