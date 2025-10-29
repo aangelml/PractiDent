@@ -68,3 +68,74 @@ export const MESSAGES = {
   NETWORK_ERROR: 'Error de conexión. Por favor, intenta nuevamente',
   UNAUTHORIZED: 'No tienes permisos para acceder a este recurso'
 };
+
+// ==================== PRÁCTICAS ====================
+
+// Estados de Prácticas
+export const PRACTICE_ESTADOS = {
+  ACTIVA: 'activa',
+  COMPLETADA: 'completada',
+  CANCELADA: 'cancelada'
+};
+
+export const PRACTICE_ESTADOS_OPTIONS = [
+  { value: 'activa', label: 'Activa' },
+  { value: 'completada', label: 'Completada' },
+  { value: 'cancelada', label: 'Cancelada' }
+];
+
+// Tipos de Prácticas
+export const PRACTICE_TIPOS = [
+  { value: 'Profilaxis', label: 'Profilaxis' },
+  { value: 'Endodoncia', label: 'Endodoncia' },
+  { value: 'Periodoncia', label: 'Periodoncia' },
+  { value: 'Ortodoncia', label: 'Ortodoncia' },
+  { value: 'Cirugia', label: 'Cirugía' },
+  { value: 'Restauracion', label: 'Restauración' },
+  { value: 'Protesis', label: 'Prótesis' },
+  { value: 'Pediatrica', label: 'Pediátrica' },
+  { value: 'Estetica', label: 'Estética' },
+  { value: 'Diagnostico', label: 'Diagnóstico' }
+];
+
+// Niveles de Dificultad
+export const PRACTICE_NIVELES = [
+  { value: 'basico', label: 'Básico' },
+  { value: 'intermedio', label: 'Intermedio' },
+  { value: 'avanzado', label: 'Avanzado' }
+];
+
+// Estados de Asignación
+export const ASSIGNMENT_ESTADOS = {
+  ASIGNADO: 'asignado',
+  EN_PROGRESO: 'en_progreso',
+  COMPLETADO: 'completado',
+  CANCELADO: 'cancelado'
+};
+
+export const ASSIGNMENT_ESTADOS_OPTIONS = [
+  { value: 'asignado', label: 'Asignado' },
+  { value: 'en_progreso', label: 'En Progreso' },
+  { value: 'completado', label: 'Completado' },
+  { value: 'cancelado', label: 'Cancelado' }
+];
+
+// Colores para Badges de Prácticas
+export const PRACTICE_ESTADO_COLORS = {
+  activa: 'success',
+  completada: 'info',
+  cancelada: 'error'
+};
+
+export const PRACTICE_NIVEL_COLORS = {
+  basico: 'success',
+  intermedio: 'warning',
+  avanzado: 'error'
+};
+
+export const ASSIGNMENT_ESTADO_COLORS = {
+  asignado: 'info',
+  en_progreso: 'warning',
+  completado: 'success',
+  cancelado: 'error'
+};

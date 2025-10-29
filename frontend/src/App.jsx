@@ -23,6 +23,12 @@ import UsersList from './pages/users/UsersList.jsx';
 import CreateUser from './pages/users/CreateUser.jsx';
 import UserDetail from './pages/users/UserDetail.jsx';
 
+// Practices Pages (SPRINT F3) ⭐ NUEVO
+import PracticesList from './pages/practices/PracticesList.jsx';
+import CreatePractice from './pages/practices/CreatePractice.jsx';
+import PracticeDetail from './pages/practices/PracticeDetail.jsx';
+import MyPractices from './pages/practices/MyPractices.jsx';
+
 // Components
 import Loader from './components/ui/Loader.jsx';
 
@@ -69,7 +75,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Rutas Protegidas con Layout */}
+        {/* Rutas Protegidas con Layout - Dashboards */}
         <Route
           path="/dashboard/admin"
           element={
@@ -156,6 +162,73 @@ function App() {
               <RoleRoute allowedRoles={[ROLES.ADMIN]}>
                 <Layout>
                   <UserDetail />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        {/* ⭐ RUTAS SPRINT F3 - GESTIÓN DE PRÁCTICAS (Maestro y Admin) */}
+        <Route
+          path="/practicas"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.MAESTRO, ROLES.ADMIN]}>
+                <Layout>
+                  <PracticesList />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/practicas/nueva"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.MAESTRO, ROLES.ADMIN]}>
+                <Layout>
+                  <CreatePractice />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/practicas/:id"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.MAESTRO, ROLES.ADMIN]}>
+                <Layout>
+                  <PracticeDetail />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        {/* ⭐ RUTAS SPRINT F3 - MIS PRÁCTICAS (Solo Practicante) */}
+        <Route
+          path="/mis-practicas"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.PRACTICANTE]}>
+                <Layout>
+                  <MyPractices />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/mis-practicas/:id"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.PRACTICANTE]}>
+                <Layout>
+                  <PracticeDetail />
                 </Layout>
               </RoleRoute>
             </PrivateRoute>

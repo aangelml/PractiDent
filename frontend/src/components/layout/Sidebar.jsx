@@ -9,7 +9,8 @@ import {
   UserCog,
   GraduationCap,
   Stethoscope,
-  X
+  X,
+  BookOpen // ⭐ NUEVO
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { ROLES } from '../../utils/constants';
@@ -23,6 +24,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     [ROLES.ADMIN]: [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard/admin' },
       { icon: Users, label: 'Gestión de Usuarios', path: '/usuarios' },
+      { icon: BookOpen, label: 'Prácticas', path: '/practicas' }, // ⭐ NUEVO
       { icon: GraduationCap, label: 'Practicantes', path: '/practicantes' },
       { icon: Stethoscope, label: 'Maestros', path: '/maestros' },
       { icon: UserCog, label: 'Pacientes', path: '/pacientes' },
@@ -33,6 +35,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     ],
     [ROLES.MAESTRO]: [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard/maestro' },
+      { icon: BookOpen, label: 'Mis Prácticas', path: '/practicas' }, // ⭐ NUEVO
       { icon: GraduationCap, label: 'Mis Practicantes', path: '/mis-practicantes' },
       { icon: Calendar, label: 'Supervisión', path: '/supervision' },
       { icon: FileText, label: 'Evaluaciones', path: '/evaluaciones' },
@@ -41,6 +44,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     ],
     [ROLES.PRACTICANTE]: [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard/practicante' },
+      { icon: BookOpen, label: 'Mis Prácticas', path: '/mis-practicas' }, // ⭐ NUEVO
       { icon: Calendar, label: 'Mis Citas', path: '/mis-citas' },
       { icon: Users, label: 'Mis Pacientes', path: '/mis-pacientes' },
       { icon: FileText, label: 'Historiales', path: '/historiales' },

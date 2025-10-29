@@ -70,64 +70,63 @@ class Practice {
     }
 
     // Obtener todas las prácticas con filtros
-    static async findAll(filters = {}) {
-        let query = `
-            SELECT 
-                p.*,
-                CONCAT(u.nombre, ' ', u.apellido) as maestro_nombre,
-                m.especialidad as maestro_especialidad,
-                COUNT(DISTINCT pp.practicante_id) as total_practicantes
-            FROM practicas p
-            LEFT JOIN maestros m ON p.maestro_id = m.id
-            LEFT JOIN usuarios u ON m.usuario_id = u.id
-            LEFT JOIN practicantes_practicas pp ON p.id = pp.practica_id
-            WHERE 1=1
-        `;
+// Obtener todas las prácticas con filtros
+static async findAll(filters = {}) {
+    let query = `
+        SELECT 
+            p.*,
+            CONCAT(u.nombre, ' ', u.apellido) as maestro_nombre,
+            m.especialidad as maestro_especialidad,
+            COUNT(DISTINCT pp.practicante_id) as total_practicantes
+        FROM practicas p
+        LEFT JOIN maestros m ON p.maestro_id = m.id
+        LEFT JOIN usuarios u ON m.usuario_id = u.id
+        LEFT JOIN practicantes_practicas pp ON p.id = pp.practica_id
+        WHERE 1=1
+    `;
 
-        const params = [];
+    const params = [];
 
-        if (filters.maestro_id) {
-            query += ' AND p.maestro_id = ?';
-            params.push(filters.maestro_id);
-        }
-
-        if (filters.estado) {
-            query += ' AND p.estado = ?';
-            params.push(filters.estado);
-        }
-
-        if (filters.tipo_practica) {
-            query += ' AND p.tipo_practica = ?';
-            params.push(filters.tipo_practica);
-        }
-
-        if (filters.nivel_dificultad) {
-            query += ' AND p.nivel_dificultad = ?';
-            params.push(filters.nivel_dificultad);
-        }
-
-        if (filters.search) {
-            query += ' AND (p.nombre LIKE ? OR p.descripcion LIKE ?)';
-            const searchTerm = `%${filters.search}%`;
-            params.push(searchTerm, searchTerm);
-        }
-
-        query += ' GROUP BY p.id ORDER BY p.created_at DESC';
-
-        if (filters.limit) {
-            query += ' LIMIT ?';
-            params.push(parseInt(filters.limit));
-        }
-
-        if (filters.offset) {
-            query += ' OFFSET ?';
-            params.push(parseInt(filters.offset));
-        }
-
-        const [rows] = await db.execute(query, params);
-        return rows;
+    if (filters.maestro_id) {
+        query += ' AND p.maestro_id = ?';
+        params.push(filters.maestro_id);
     }
 
+    if (filters.estado) {
+        query += ' AND p.estado = ?';
+        params.push(filters.estado);
+    }
+
+    if (filters.tipo_practica) {
+        query += ' AND p.tipo_practica = ?';
+        params.push(filters.tipo_practica);
+    }
+
+    if (filters.nivel_dificultad) {
+        query += ' AND p.nivel_dificultad = ?';
+        params.push(filters.nivel_dificultad);
+    }
+
+    if (filters.search) {
+        query += ' AND (p.nombre LIKE ? OR p.descripcion LIKE ?)';
+        const searchTerm = `%${filters.search}%`;
+        params.push(searchTerm, searchTerm);
+    }
+
+    query += ' GROUP BY p.id ORDER BY p.created_at DESC';
+
+    // ⭐ SOLUCIÓN: Usar concatenación directa para LIMIT y OFFSET
+    if (filters.limit) {
+        const limit = parseInt(filters.limit);
+        const offset = filters.offset ? parseInt(filters.offset) : 0;
+        
+        // Concatenar directamente los valores numéricos (no como placeholders)
+        query += ` LIMIT ${offset}, ${limit}`;
+    }
+
+    const [rows] = await db.execute(query, params);
+    return rows;
+}
     // Obtener práctica por ID
     static async findById(id) {
         const [rows] = await db.execute(

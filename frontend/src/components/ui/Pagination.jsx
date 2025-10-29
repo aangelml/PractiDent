@@ -1,118 +1,118 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from './Button';
+import Select from './Select';
 
 const Pagination = ({
-  currentPage = 1,
-  totalPages = 1,
+  currentPage,
+  totalPages,
   onPageChange,
   itemsPerPage = 10,
   onItemsPerPageChange,
-  showItemsPerPage = true,
-  className = ''
+  showItemsPerPage = false
 }) => {
-  const pages = [];
-  const maxPagesToShow = 5;
-  
-  let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-  let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-  
-  if (endPage - startPage + 1 < maxPagesToShow) {
-    startPage = Math.max(1, endPage - maxPagesToShow + 1);
-  }
+  const itemsPerPageOptions = [
+    { value: 10, label: '10 por página' },
+    { value: 25, label: '25 por página' },
+    { value: 50, label: '50 por página' },
+    { value: 100, label: '100 por página' }
+  ];
 
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(i);
-  }
+  const generatePageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
 
-  const itemsPerPageOptions = [10, 25, 50, 100];
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  const pageNumbers = generatePageNumbers();
 
   return (
-    <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white rounded-lg border border-gray-200 ${className}`}>
-      {showItemsPerPage && (
-        <div className="flex items-center gap-2">
-          <label htmlFor="items-per-page" className="text-sm text-gray-600">
-            Mostrar por página:
-          </label>
-          <select
-            id="items-per-page"
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200">
+      {/* Items per page */}
+      {showItemsPerPage && onItemsPerPageChange && (
+        <div className="w-full sm:w-auto">
+          <Select
+            options={itemsPerPageOptions}
             value={itemsPerPage}
-            onChange={(e) => onItemsPerPageChange(parseInt(e.target.value))}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            {itemsPerPageOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+            fullWidth={false}
+            className="min-w-[160px]"
+          />
         </div>
       )}
 
+      {/* Pagination controls */}
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="p-2"
         >
           <ChevronLeft className="w-4 h-4" />
         </Button>
 
-        {startPage > 1 && (
-          <>
+        {pageNumbers.map((page, index) => (
+          page === '...' ? (
+            <span key={`ellipsis-${index}`} className="px-2 text-gray-500">
+              ...
+            </span>
+          ) : (
             <Button
-              variant={1 === currentPage ? 'primary' : 'ghost'}
+              key={page}
+              variant={currentPage === page ? 'primary' : 'ghost'}
               size="sm"
-              onClick={() => onPageChange(1)}
-              className="min-w-10"
+              onClick={() => onPageChange(page)}
+              className={`min-w-[40px] ${
+                currentPage === page ? 'font-bold' : ''
+              }`}
             >
-              1
+              {page}
             </Button>
-            {startPage > 2 && <span className="text-gray-500">...</span>}
-          </>
-        )}
-
-        {pages.map((page) => (
-          <Button
-            key={page}
-            variant={page === currentPage ? 'primary' : 'ghost'}
-            size="sm"
-            onClick={() => onPageChange(page)}
-            className="min-w-10"
-          >
-            {page}
-          </Button>
+          )
         ))}
-
-        {endPage < totalPages && (
-          <>
-            {endPage < totalPages - 1 && <span className="text-gray-500">...</span>}
-            <Button
-              variant={totalPages === currentPage ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => onPageChange(totalPages)}
-              className="min-w-10"
-            >
-              {totalPages}
-            </Button>
-          </>
-        )}
 
         <Button
           variant="outline"
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="p-2"
         >
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>
 
+      {/* Page info */}
       <div className="text-sm text-gray-600">
-        Página <span className="font-semibold">{currentPage}</span> de{' '}
-        <span className="font-semibold">{totalPages}</span>
+        Página {currentPage} de {totalPages}
       </div>
     </div>
   );
