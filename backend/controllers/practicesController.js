@@ -336,19 +336,8 @@ exports.getMyPractices = async (req, res) => {
             });
         }
 
-        const [practicante] = await db.execute(
-            'SELECT id FROM practicantes WHERE usuario_id = ?',
-            [req.user.userId]
-        );
-
-        if (practicante.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Practicante no encontrado'
-            });
-        }
-
-        const practices = await Practice.getByPracticante(practicante[0].id);
+        // Usar directamente req.user.userId (no buscar en tabla practicantes)
+        const practices = await Practice.getByPracticante(req.user.userId);
 
         res.json({
             success: true,

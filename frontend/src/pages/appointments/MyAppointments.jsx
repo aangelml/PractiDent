@@ -11,6 +11,7 @@ import Modal from '../../components/ui/Modal';
 import AppointmentCard from '../../components/appointments/AppointmentCard';
 import AppointmentTable from '../../components/appointments/AppointmentTable';
 import AppointmentFilters from '../../components/appointments/AppointmentFilters';
+import CompleteAppointmentModal from '../../components/appointments/CompleteAppointmentModal';
 import appointmentService from '../../services/appointmentService';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -39,6 +40,9 @@ const MyAppointments = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalAction, setModalAction] = useState(null);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+
+  // Modal para completar cita
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
 
   useEffect(() => {
     loadAppointments();
@@ -145,7 +149,13 @@ const MyAppointments = () => {
   };
 
   const handleComplete = (appointmentId) => {
-    navigate(`/citas/${appointmentId}`);
+    setSelectedAppointmentId(appointmentId);
+    setShowCompleteModal(true);
+  };
+
+  const handleCompleteSuccess = () => {
+    loadAppointments();
+    loadStats();
   };
 
   return (
@@ -335,6 +345,14 @@ const MyAppointments = () => {
           {modalAction === 'noShow' && '¿Marcar al paciente como no asistió?'}
         </p>
       </Modal>
+
+      {/* Modal Completar Cita */}
+      <CompleteAppointmentModal
+        open={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        appointmentId={selectedAppointmentId}
+        onSuccess={handleCompleteSuccess}
+      />
     </div>
   );
 };

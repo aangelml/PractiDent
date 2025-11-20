@@ -94,6 +94,7 @@ const Navbar = ({ onMenuClick }) => {
                     <p className="text-xs text-gray-500">{user?.email}</p>
                   </div>
 
+                  {/* Enlaces temporalmente comentados - no implementados 
                   <Link
                     to="/profile"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -113,6 +114,7 @@ const Navbar = ({ onMenuClick }) => {
                   </Link>
 
                   <hr className="my-2" />
+                  */}
 
                   <button
                     onClick={handleLogout}

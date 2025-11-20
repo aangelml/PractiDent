@@ -1,4 +1,4 @@
-// frontend/src/services/appointmentService.js
+// frontend/src/services/appointmentService.js - VERSIÓN COMPLETA
 import api from './api';
 
 const appointmentService = {
@@ -160,6 +160,20 @@ const appointmentService = {
       return {
         success: false,
         message: error.response?.data?.message || 'Error al completar cita'
+      };
+    }
+  },
+
+  // ⭐ AGREGADO: Marcar como no asistió
+  async noShow(id) {
+    try {
+      const response = await api.patch(`/appointments/${id}/no-show`);
+      return response.data;
+    } catch (error) {
+      console.error('Error marcando no-show:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Error al marcar no asistió'
       };
     }
   },

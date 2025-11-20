@@ -1,4 +1,4 @@
-// backend/models/Practice.js
+// backend/models/Practice.js - VERSIÓN COMPLETAMENTE CORREGIDA
 const db = require('../config/database');
 
 class Practice {
@@ -70,63 +70,60 @@ class Practice {
     }
 
     // Obtener todas las prácticas con filtros
-// Obtener todas las prácticas con filtros
-static async findAll(filters = {}) {
-    let query = `
-        SELECT 
-            p.*,
-            CONCAT(u.nombre, ' ', u.apellido) as maestro_nombre,
-            m.especialidad as maestro_especialidad,
-            COUNT(DISTINCT pp.practicante_id) as total_practicantes
-        FROM practicas p
-        LEFT JOIN maestros m ON p.maestro_id = m.id
-        LEFT JOIN usuarios u ON m.usuario_id = u.id
-        LEFT JOIN practicantes_practicas pp ON p.id = pp.practica_id
-        WHERE 1=1
-    `;
+    static async findAll(filters = {}) {
+        let query = `
+            SELECT 
+                p.*,
+                CONCAT(u.nombre, ' ', u.apellido) as maestro_nombre,
+                m.especialidad as maestro_especialidad,
+                COUNT(DISTINCT pp.practicante_id) as total_practicantes
+            FROM practicas p
+            LEFT JOIN maestros m ON p.maestro_id = m.id
+            LEFT JOIN usuarios u ON m.usuario_id = u.id
+            LEFT JOIN practicantes_practicas pp ON p.id = pp.practica_id
+            WHERE 1=1
+        `;
 
-    const params = [];
+        const params = [];
 
-    if (filters.maestro_id) {
-        query += ' AND p.maestro_id = ?';
-        params.push(filters.maestro_id);
+        if (filters.maestro_id) {
+            query += ' AND p.maestro_id = ?';
+            params.push(filters.maestro_id);
+        }
+
+        if (filters.estado) {
+            query += ' AND p.estado = ?';
+            params.push(filters.estado);
+        }
+
+        if (filters.tipo_practica) {
+            query += ' AND p.tipo_practica = ?';
+            params.push(filters.tipo_practica);
+        }
+
+        if (filters.nivel_dificultad) {
+            query += ' AND p.nivel_dificultad = ?';
+            params.push(filters.nivel_dificultad);
+        }
+
+        if (filters.search) {
+            query += ' AND (p.nombre LIKE ? OR p.descripcion LIKE ?)';
+            const searchTerm = `%${filters.search}%`;
+            params.push(searchTerm, searchTerm);
+        }
+
+        query += ' GROUP BY p.id ORDER BY p.created_at DESC';
+
+        if (filters.limit) {
+            const limit = parseInt(filters.limit);
+            const offset = filters.offset ? parseInt(filters.offset) : 0;
+            query += ` LIMIT ${offset}, ${limit}`;
+        }
+
+        const [rows] = await db.execute(query, params);
+        return rows;
     }
 
-    if (filters.estado) {
-        query += ' AND p.estado = ?';
-        params.push(filters.estado);
-    }
-
-    if (filters.tipo_practica) {
-        query += ' AND p.tipo_practica = ?';
-        params.push(filters.tipo_practica);
-    }
-
-    if (filters.nivel_dificultad) {
-        query += ' AND p.nivel_dificultad = ?';
-        params.push(filters.nivel_dificultad);
-    }
-
-    if (filters.search) {
-        query += ' AND (p.nombre LIKE ? OR p.descripcion LIKE ?)';
-        const searchTerm = `%${filters.search}%`;
-        params.push(searchTerm, searchTerm);
-    }
-
-    query += ' GROUP BY p.id ORDER BY p.created_at DESC';
-
-    // ⭐ SOLUCIÓN: Usar concatenación directa para LIMIT y OFFSET
-    if (filters.limit) {
-        const limit = parseInt(filters.limit);
-        const offset = filters.offset ? parseInt(filters.offset) : 0;
-        
-        // Concatenar directamente los valores numéricos (no como placeholders)
-        query += ` LIMIT ${offset}, ${limit}`;
-    }
-
-    const [rows] = await db.execute(query, params);
-    return rows;
-}
     // Obtener práctica por ID
     static async findById(id) {
         const [rows] = await db.execute(
@@ -155,7 +152,6 @@ static async findAll(filters = {}) {
             const fields = [];
             const values = [];
 
-            // Construir dinámicamente la consulta con solo los campos proporcionados
             if (practiceData.nombre !== undefined) {
                 fields.push('nombre = ?');
                 values.push(practiceData.nombre);
@@ -262,28 +258,83 @@ static async findAll(filters = {}) {
         }
     }
 
-    // Asignar practicante a práctica
+    // ⭐ CORREGIDO - Asignar practicante a práctica
     static async assignPracticante(practiceId, practicanteId) {
         const connection = await db.getConnection();
         
         try {
             await connection.beginTransaction();
 
-            // Usar el procedimiento almacenado
-            const [result] = await connection.execute(
-                'CALL asignar_practicante_practica(?, ?, @mensaje, @success)',
+            // Verificar que la práctica existe
+            const [practice] = await connection.execute(
+                'SELECT id, cupo_disponible FROM practicas WHERE id = ?',
+                [practiceId]
+            );
+
+            if (practice.length === 0) {
+                await connection.rollback();
+                return {
+                    success: false,
+                    message: 'La práctica no existe'
+                };
+            }
+
+            // Verificar que el practicante existe y es tipo practicante
+            const [user] = await connection.execute(
+                'SELECT id FROM usuarios WHERE id = ? AND tipo_usuario = ? AND activo = TRUE',
+                [practicanteId, 'practicante']
+            );
+
+            if (user.length === 0) {
+                await connection.rollback();
+                return {
+                    success: false,
+                    message: 'El practicante no existe o no está activo'
+                };
+            }
+
+            // Verificar que no esté ya asignado
+            const [existing] = await connection.execute(
+                'SELECT id FROM practicantes_practicas WHERE practica_id = ? AND practicante_id = ?',
                 [practiceId, practicanteId]
             );
 
-            const [output] = await connection.execute(
-                'SELECT @mensaje as mensaje, @success as success'
+            if (existing.length > 0) {
+                await connection.rollback();
+                return {
+                    success: false,
+                    message: 'El practicante ya está asignado a esta práctica'
+                };
+            }
+
+            // Verificar que haya cupo disponible
+            if (practice[0].cupo_disponible <= 0) {
+                await connection.rollback();
+                return {
+                    success: false,
+                    message: 'No hay cupo disponible en esta práctica'
+                };
+            }
+
+            // Asignar practicante
+            await connection.execute(
+                `INSERT INTO practicantes_practicas 
+                 (practica_id, practicante_id, fecha_asignacion, estado) 
+                 VALUES (?, ?, NOW(), 'asignado')`,
+                [practiceId, practicanteId]
+            );
+
+            // Reducir cupo disponible
+            await connection.execute(
+                'UPDATE practicas SET cupo_disponible = cupo_disponible - 1 WHERE id = ?',
+                [practiceId]
             );
 
             await connection.commit();
             
             return {
-                success: output[0].success === 1,
-                message: output[0].mensaje
+                success: true,
+                message: 'Practicante asignado exitosamente'
             };
         } catch (error) {
             await connection.rollback();
@@ -319,21 +370,22 @@ static async findAll(filters = {}) {
         }
     }
 
-    // Obtener practicantes asignados a una práctica
+    // ⭐ CORREGIDO - Obtener practicantes asignados a una práctica
     static async getPracticantes(practiceId) {
         const [rows] = await db.execute(
             `SELECT 
                 pp.*,
-                p.matricula,
-                p.semestre,
-                p.turno,
-                u.nombre,
-                u.apellido,
-                u.email,
-                u.telefono
+                u.id as practicante_id,
+                u.nombre as practicante_nombre,
+                u.apellido as practicante_apellido,
+                u.email as practicante_email,
+                u.telefono as practicante_telefono,
+                prac.matricula,
+                prac.semestre,
+                prac.turno
              FROM practicantes_practicas pp
-             JOIN practicantes p ON pp.practicante_id = p.id
-             JOIN usuarios u ON p.usuario_id = u.id
+             INNER JOIN usuarios u ON pp.practicante_id = u.id
+             LEFT JOIN practicantes prac ON u.id = prac.usuario_id
              WHERE pp.practica_id = ?
              ORDER BY pp.fecha_asignacion DESC`,
             [practiceId]
@@ -342,7 +394,7 @@ static async findAll(filters = {}) {
         return rows;
     }
 
-    // Obtener prácticas de un practicante
+    // ⭐ CORREGIDO - Obtener prácticas de un practicante
     static async getByPracticante(practicanteId) {
         const [rows] = await db.execute(
             `SELECT 
@@ -355,8 +407,8 @@ static async findAll(filters = {}) {
                 pp.calificacion_maestro,
                 CONCAT(u.nombre, ' ', u.apellido) as maestro_nombre,
                 m.especialidad as maestro_especialidad
-             FROM practicas p
-             JOIN practicantes_practicas pp ON p.id = pp.practica_id
+             FROM practicantes_practicas pp
+             INNER JOIN practicas p ON pp.practica_id = p.id
              LEFT JOIN maestros m ON p.maestro_id = m.id
              LEFT JOIN usuarios u ON m.usuario_id = u.id
              WHERE pp.practicante_id = ?
