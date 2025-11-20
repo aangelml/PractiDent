@@ -59,16 +59,16 @@ exports.getAllUsers = async (req, res) => {
 
     const [users] = await db.execute(query, params);
 
+    // ⭐ CAMBIO: Devolver users directamente, no dentro de data
     res.json({
       success: true,
-      data: {
-        users,
-        pagination: {
-          total,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalPages: Math.ceil(total / limit)
-        }
+      users, // ← Ahora está en el primer nivel
+      total,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / limit)
       }
     });
 
@@ -110,7 +110,7 @@ exports.getUserById = async (req, res) => {
 
     res.json({
       success: true,
-      data: { user: users[0] }
+      data: users[0]
     });
 
   } catch (error) {

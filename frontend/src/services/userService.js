@@ -1,41 +1,49 @@
 import api from './api';
 
 const userService = {
-async getAll(filters = {}) {
-  try {
-    const { tipo_usuario, estado, search, page = 1, limit = 10 } = filters;
-    
-    const params = new URLSearchParams();
-    if (tipo_usuario) params.append('tipo_usuario', tipo_usuario);
-    if (estado) params.append('estado', estado);
-    if (search) params.append('search', search);
-    params.append('page', page);
-    params.append('limit', limit);
+  async getAll(filters = {}) {
+    try {
+      const { tipo_usuario, estado, search, page = 1, limit = 10 } = filters;
+      
+      const params = new URLSearchParams();
+      if (tipo_usuario) params.append('tipo_usuario', tipo_usuario);
+      if (estado) params.append('estado', estado);
+      if (search) params.append('search', search);
+      params.append('page', page);
+      params.append('limit', limit);
 
-    const response = await api.get(`/users?${params.toString()}`);
-    
-    console.log('Raw response:', response.data);
-    
-    // El backend devuelve { success: true, data: [...usuarios], total: X }
-    const data = response.data.data || response.data;
-    const users = Array.isArray(data) ? data : (data.users || []);
-    const total = response.data.total || users.length;
+      const response = await api.get(`/users?${params.toString()}`);
+      
+      // Manejar estructura de respuesta
+      let users = [];
+      if (response.data.users && Array.isArray(response.data.users)) {
+        users = response.data.users;
+      } else if (response.data.data && Array.isArray(response.data.data.users)) {
+        users = response.data.data.users;
+      } else if (response.data.data && Array.isArray(response.data.data)) {
+        users = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        users = response.data;
+      }
 
-    return {
-      success: true,
-      data: users,
-      pagination: response.data.pagination || {},
-      total: total
-    };
-  } catch (error) {
-    console.error('UserService error:', error);
-    return {
-      success: false,
-      message: error.response?.data?.message || 'Error al obtener usuarios',
-      error: error.response?.data?.error
-    };
-  }
-},
+      const total = response.data.total || users.length;
+
+      return {
+        success: true,
+        data: users,
+        pagination: response.data.pagination || {},
+        total: total
+      };
+    } catch (error) {
+      console.error('UserService error:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Error al obtener usuarios',
+        error: error.response?.data?.error,
+        data: []
+      };
+    }
+  },
 
   async getById(id) {
     try {
@@ -126,54 +134,132 @@ async getAll(filters = {}) {
 
   async getMaestros(filters = {}) {
     try {
+      console.log('📥 getMaestros - Llamando backend...');
       const response = await api.get('/users?tipo_usuario=maestro');
+      console.log('✅ getMaestros - Respuesta:', response.data);
+      
+      let usuarios = [];
+      
+      // Extraer usuarios según estructura
+      if (response.data.users && Array.isArray(response.data.users)) {
+        usuarios = response.data.users;
+      } else if (response.data.data && Array.isArray(response.data.data.users)) {
+        usuarios = response.data.data.users;
+      } else if (response.data.data && Array.isArray(response.data.data)) {
+        usuarios = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        usuarios = response.data;
+      }
+
+      console.log(`✅ ${usuarios.length} maestros encontrados`);
+
       return {
         success: true,
-        data: response.data.data || response.data,
-        total: response.data.total || 0
+        data: usuarios,
+        total: response.data.total || usuarios.length
       };
     } catch (error) {
+      console.error('❌ getMaestros error:', error);
       return {
         success: false,
         message: 'Error al obtener maestros',
-        error: error.response?.data?.error
+        error: error.response?.data?.error,
+        data: []
       };
     }
   },
 
-  async getPracticantes(filters = {}) {
-    try {
-      const response = await api.get('/users?tipo_usuario=practicante');
-      return {
-        success: true,
-        data: response.data.data || response.data,
-        total: response.data.total || 0
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Error al obtener practicantes',
-        error: error.response?.data?.error
-      };
+ async getPracticantes(filters = {}) {
+  try {
+    console.log('📥 getPracticantes - Llamando backend...');
+    const response = await api.get('/users?tipo_usuario=practicante');
+    console.log('✅ getPracticantes - Respuesta completa:', response.data);
+    
+    let usuarios = [];
+    
+    // Extraer usuarios según estructura de respuesta
+    if (response.data.users && Array.isArray(response.data.users)) {
+      usuarios = response.data.users;
+    } else if (response.data.data && Array.isArray(response.data.data.users)) {
+      usuarios = response.data.data.users;
+    } else if (response.data.data && Array.isArray(response.data.data)) {
+      usuarios = response.data.data;
+    } else if (Array.isArray(response.data)) {
+      usuarios = response.data;
     }
-  },
 
-  async getPacientes(filters = {}) {
-    try {
-      const response = await api.get('/users?tipo_usuario=paciente');
-      return {
-        success: true,
-        data: response.data.data || response.data,
-        total: response.data.total || 0
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Error al obtener pacientes',
-        error: error.response?.data?.error
-      };
+    console.log(`✅ ${usuarios.length} usuarios recibidos del backend:`, usuarios);
+
+    // ⭐ FILTRO SIMPLIFICADO: Solo verificar que sea practicante
+    // No filtrar por estado porque viene undefined
+    const practicantes = usuarios.filter(user => {
+      const esPracticante = user.tipo_usuario === 'practicante';
+      
+      console.log(`Usuario ${user.id} - ${user.nombre}:`, {
+        tipo_usuario: user.tipo_usuario,
+        esPracticante
+      });
+      
+      return esPracticante;
+    });
+
+    console.log(`✅ ${practicantes.length} practicantes encontrados:`, practicantes);
+
+    return {
+      success: true,
+      data: practicantes,
+      total: practicantes.length
+    };
+  } catch (error) {
+    console.error('❌ getPracticantes error:', error);
+    return {
+      success: false,
+      message: 'Error al obtener practicantes',
+      error: error.response?.data?.error,
+      data: []
+    };
+  }
+},
+
+async getPacientes(filters = {}) {
+  try {
+    console.log('📥 getPacientes - Llamando backend...');
+    const response = await api.get('/users?tipo_usuario=paciente');
+    console.log('✅ getPacientes - Respuesta:', response.data);
+    
+    let usuarios = [];
+    
+    // Extraer usuarios según estructura
+    if (response.data.users && Array.isArray(response.data.users)) {
+      usuarios = response.data.users;
+    } else if (response.data.data && Array.isArray(response.data.data.users)) {
+      usuarios = response.data.data.users;
+    } else if (response.data.data && Array.isArray(response.data.data)) {
+      usuarios = response.data.data;
+    } else if (Array.isArray(response.data)) {
+      usuarios = response.data;
     }
-  },
+
+    // ⭐ FILTRO SIMPLIFICADO: Solo verificar que sea paciente
+    const pacientes = usuarios.filter(user => user.tipo_usuario === 'paciente');
+
+    console.log(`✅ ${pacientes.length} pacientes encontrados`);
+
+    return {
+      success: true,
+      data: pacientes,
+      total: pacientes.length
+    };
+  } catch (error) {
+    console.error('❌ getPacientes error:', error);
+    return {
+      success: false,
+      message: 'Error al obtener pacientes',
+      error: error.response?.data?.error,
+      data: []
+    };
+  }
+},
 
   async getStats() {
     try {

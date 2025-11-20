@@ -1,78 +1,94 @@
-// backend/controllers/appointmentsController.js - COMPLETO SPRINT B3
-const Appointment = require('../models/Appointment');
+// backend/controllers/appointmentsController.js - VERSIÓN FINAL CORREGIDA
 const db = require('../config/database');
 
 // Obtener todas las citas
 exports.getAllAppointments = async (req, res) => {
     try {
-        const { estado, fecha_desde, fecha_hasta, search, page = 1, limit = 10 } = req.query;
+        const { estado, fecha_desde, fecha_hasta, search, page = 1, limit = 15 } = req.query;
         const offset = (page - 1) * limit;
 
-        const filters = {
-            estado,
-            fecha_desde,
-            fecha_hasta,
-            search,
-            limit: parseInt(limit),
-            offset: parseInt(offset)
-        };
+        let query = `
+            SELECT 
+                c.*,
+                up.nombre as paciente_nombre,
+                up.apellido as paciente_apellido,
+                upr.nombre as practicante_nombre,
+                upr.apellido as practicante_apellido,
+                p.nombre as practica_nombre
+            FROM citas c
+            LEFT JOIN pacientes pac ON c.paciente_id = pac.id
+            LEFT JOIN usuarios up ON pac.usuario_id = up.id
+            LEFT JOIN practicantes pra ON c.practicante_id = pra.id
+            LEFT JOIN usuarios upr ON pra.usuario_id = upr.id
+            LEFT JOIN practicas p ON c.practica_id = p.id
+            WHERE 1=1
+        `;
+        
+        const params = [];
 
-        // Filtros según el rol del usuario
+        // Filtros según rol (buscar por usuario_id en tablas relacionadas)
         if (req.user.tipo_usuario === 'practicante') {
-            const [practicante] = await db.execute(
-                'SELECT id FROM practicantes WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (practicante.length > 0) {
-                filters.practicante_id = practicante[0].id;
-            }
-        } else if (req.user.tipo_usuario === 'maestro') {
-            const [maestro] = await db.execute(
-                'SELECT id FROM maestros WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (maestro.length > 0) {
-                filters.maestro_id = maestro[0].id;
-            }
+            query += ' AND pra.usuario_id = ?';
+            params.push(req.user.userId);
         } else if (req.user.tipo_usuario === 'paciente') {
-            const [paciente] = await db.execute(
-                'SELECT id FROM pacientes WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (paciente.length > 0) {
-                filters.paciente_id = paciente[0].id;
-            }
+            query += ' AND pac.usuario_id = ?';
+            params.push(req.user.userId);
+        } else if (req.user.tipo_usuario === 'maestro') {
+            query += ' AND p.maestro_id IN (SELECT id FROM maestros WHERE usuario_id = ?)';
+            params.push(req.user.userId);
         }
 
-        const appointments = await Appointment.findAll(filters);
+        // Filtros adicionales
+        if (estado) {
+            query += ' AND c.estado = ?';
+            params.push(estado);
+        }
 
-        // Obtener total para paginación
-        let countQuery = 'SELECT COUNT(*) as total FROM citas c JOIN practicas p ON c.practica_id = p.id WHERE 1=1';
+        if (fecha_desde) {
+            query += ' AND DATE(c.fecha_hora) >= ?';
+            params.push(fecha_desde);
+        }
+
+        if (fecha_hasta) {
+            query += ' AND DATE(c.fecha_hora) <= ?';
+            params.push(fecha_hasta);
+        }
+
+        if (search) {
+            query += ' AND (up.nombre LIKE ? OR up.apellido LIKE ? OR upr.nombre LIKE ?)';
+            const searchParam = `%${search}%`;
+            params.push(searchParam, searchParam, searchParam);
+        }
+
+        query += ' ORDER BY c.fecha_hora DESC';
+        query += ` LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+
+        const [appointments] = await db.execute(query, params);
+
+        // Total count
+        let countQuery = `
+            SELECT COUNT(*) as total FROM citas c 
+            LEFT JOIN pacientes pac ON c.paciente_id = pac.id
+            LEFT JOIN practicantes pra ON c.practicante_id = pra.id
+            LEFT JOIN practicas p ON c.practica_id = p.id 
+            WHERE 1=1
+        `;
         const countParams = [];
+        
+        if (req.user.tipo_usuario === 'practicante') {
+            countQuery += ' AND pra.usuario_id = ?';
+            countParams.push(req.user.userId);
+        } else if (req.user.tipo_usuario === 'paciente') {
+            countQuery += ' AND pac.usuario_id = ?';
+            countParams.push(req.user.userId);
+        } else if (req.user.tipo_usuario === 'maestro') {
+            countQuery += ' AND p.maestro_id IN (SELECT id FROM maestros WHERE usuario_id = ?)';
+            countParams.push(req.user.userId);
+        }
 
-        if (filters.practicante_id) {
-            countQuery += ' AND c.practicante_id = ?';
-            countParams.push(filters.practicante_id);
-        }
-        if (filters.maestro_id) {
-            countQuery += ' AND p.maestro_id = ?';
-            countParams.push(filters.maestro_id);
-        }
-        if (filters.paciente_id) {
-            countQuery += ' AND c.paciente_id = ?';
-            countParams.push(filters.paciente_id);
-        }
         if (estado) {
             countQuery += ' AND c.estado = ?';
             countParams.push(estado);
-        }
-        if (fecha_desde) {
-            countQuery += ' AND DATE(c.fecha_hora) >= ?';
-            countParams.push(fecha_desde);
-        }
-        if (fecha_hasta) {
-            countQuery += ' AND DATE(c.fecha_hora) <= ?';
-            countParams.push(fecha_hasta);
         }
 
         const [countResult] = await db.execute(countQuery, countParams);
@@ -80,14 +96,13 @@ exports.getAllAppointments = async (req, res) => {
 
         res.json({
             success: true,
-            data: {
-                appointments,
-                pagination: {
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    total,
-                    totalPages: Math.ceil(total / limit)
-                }
+            data: appointments,
+            total: total,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                totalPages: Math.ceil(total / limit)
             }
         });
     } catch (error) {
@@ -100,47 +115,161 @@ exports.getAllAppointments = async (req, res) => {
     }
 };
 
+// Crear nueva cita - ⭐ VERSIÓN CORREGIDA
+exports.createAppointment = async (req, res) => {
+    try {
+        const {
+            paciente_id,         // Este es usuario_id del paciente
+            practicante_id,      // Este es usuario_id del practicante
+            practica_id,
+            fecha_hora,
+            duracion_minutos,
+            motivo_consulta
+        } = req.body;
+
+        console.log('Creando cita con datos:', req.body);
+
+        // Validar campos requeridos
+        if (!paciente_id || !practicante_id || !practica_id || !fecha_hora || !motivo_consulta) {
+            return res.status(400).json({
+                success: false,
+                message: 'Faltan campos requeridos',
+                errors: [
+                    { field: 'paciente_id', required: !!paciente_id },
+                    { field: 'practicante_id', required: !!practicante_id },
+                    { field: 'practica_id', required: !!practica_id },
+                    { field: 'fecha_hora', required: !!fecha_hora },
+                    { field: 'motivo_consulta', required: !!motivo_consulta }
+                ]
+            });
+        }
+
+        // ⭐ CLAVE: Obtener los IDs de las tablas practicantes y pacientes
+        // El frontend envía usuario_id, pero necesitamos practicantes.id y pacientes.id
+
+        // 1. Obtener ID del practicante en tabla practicantes
+        const [practicante] = await db.execute(
+            'SELECT id FROM practicantes WHERE usuario_id = ?',
+            [practicante_id]
+        );
+
+        if (practicante.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Practicante no encontrado'
+            });
+        }
+
+        const practicante_db_id = practicante[0].id;
+
+        // 2. Obtener ID del paciente en tabla pacientes
+        const [paciente] = await db.execute(
+            'SELECT id FROM pacientes WHERE usuario_id = ?',
+            [paciente_id]
+        );
+
+        if (paciente.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Paciente no encontrado'
+            });
+        }
+
+        const paciente_db_id = paciente[0].id;
+
+        // 3. Validar que la práctica existe
+        const [practica] = await db.execute(
+            'SELECT id FROM practicas WHERE id = ?',
+            [practica_id]
+        );
+
+        if (practica.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Práctica no encontrada'
+            });
+        }
+
+        // 4. Insertar cita usando los IDs de las tablas relacionadas
+        const query = `
+            INSERT INTO citas (
+                paciente_id, practicante_id, practica_id, fecha_hora,
+                duracion_minutos, motivo_consulta, estado
+            ) VALUES (?, ?, ?, ?, ?, ?, 'pendiente')
+        `;
+
+        const [result] = await db.execute(query, [
+            paciente_db_id,      // ⭐ Usar ID de tabla pacientes
+            practicante_db_id,   // ⭐ Usar ID de tabla practicantes
+            practica_id,
+            fecha_hora,
+            duracion_minutos || 60,
+            motivo_consulta
+        ]);
+
+        console.log('✅ Cita creada con ID:', result.insertId);
+
+        res.status(201).json({
+            success: true,
+            message: 'Cita creada exitosamente',
+            data: {
+                id: result.insertId,
+                paciente_id: paciente_db_id,
+                practicante_id: practicante_db_id,
+                practica_id,
+                fecha_hora,
+                duracion_minutos: duracion_minutos || 60,
+                motivo_consulta,
+                estado: 'pendiente'
+            }
+        });
+    } catch (error) {
+        console.error('Error creating appointment:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al crear cita',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
 // Obtener cita por ID
 exports.getAppointmentById = async (req, res) => {
     try {
         const { id } = req.params;
-        const appointment = await Appointment.findById(id);
 
-        if (!appointment) {
+        const query = `
+            SELECT 
+                c.*,
+                up.nombre as paciente_nombre,
+                up.apellido as paciente_apellido,
+                up.email as paciente_email,
+                upr.nombre as practicante_nombre,
+                upr.apellido as practicante_apellido,
+                upr.email as practicante_email,
+                p.nombre as practica_nombre,
+                p.descripcion as practica_descripcion
+            FROM citas c
+            LEFT JOIN pacientes pac ON c.paciente_id = pac.id
+            LEFT JOIN usuarios up ON pac.usuario_id = up.id
+            LEFT JOIN practicantes pra ON c.practicante_id = pra.id
+            LEFT JOIN usuarios upr ON pra.usuario_id = upr.id
+            LEFT JOIN practicas p ON c.practica_id = p.id
+            WHERE c.id = ?
+        `;
+
+        const [appointments] = await db.execute(query, [id]);
+
+        if (appointments.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: 'Cita no encontrada'
             });
         }
 
-        // Verificar permisos
-        if (req.user.tipo_usuario === 'practicante') {
-            const [practicante] = await db.execute(
-                'SELECT id FROM practicantes WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (practicante.length === 0 || appointment.practicante_id !== practicante[0].id) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permiso para ver esta cita'
-                });
-            }
-        } else if (req.user.tipo_usuario === 'paciente') {
-            const [paciente] = await db.execute(
-                'SELECT id FROM pacientes WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (paciente.length === 0 || appointment.paciente_id !== paciente[0].id) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permiso para ver esta cita'
-                });
-            }
-        }
-
         res.json({
             success: true,
-            data: appointment
+            data: appointments[0]
         });
     } catch (error) {
         console.error('Error getting appointment:', error);
@@ -151,147 +280,32 @@ exports.getAppointmentById = async (req, res) => {
     }
 };
 
-// Crear nueva cita
-exports.createAppointment = async (req, res) => {
-    try {
-        const appointmentData = {
-            ...req.body,
-            created_by: req.user.userId
-        };
-
-        // Validar que el paciente existe
-        const [paciente] = await db.execute(
-            'SELECT id FROM pacientes WHERE id = ?',
-            [appointmentData.paciente_id]
-        );
-
-        if (paciente.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Paciente no encontrado'
-            });
-        }
-
-        // Validar que el practicante existe y está asignado a la práctica
-        const [asignacion] = await db.execute(
-            `SELECT * FROM practicantes_practicas 
-             WHERE practica_id = ? AND practicante_id = ? 
-             AND estado IN ('asignado', 'en_progreso')`,
-            [appointmentData.practica_id, appointmentData.practicante_id]
-        );
-
-        if (asignacion.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'El practicante no está asignado a esta práctica o no está activo'
-            });
-        }
-
-        const appointment = await Appointment.create(appointmentData);
-
-        res.status(201).json({
-            success: true,
-            message: 'Cita creada exitosamente',
-            data: appointment
-        });
-    } catch (error) {
-        console.error('Error creating appointment:', error);
-        
-        if (error.message.includes('ya tiene una cita')) {
-            return res.status(409).json({
-                success: false,
-                message: error.message
-            });
-        }
-        
-        if (error.message.includes('disponibilidad')) {
-            return res.status(400).json({
-                success: false,
-                message: error.message
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            message: 'Error al crear cita',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-};
-
-// Actualizar cita
-exports.updateAppointment = async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        const appointment = await Appointment.findById(id);
-        if (!appointment) {
-            return res.status(404).json({
-                success: false,
-                message: 'Cita no encontrada'
-            });
-        }
-
-        // Verificar permisos
-        if (req.user.tipo_usuario === 'practicante') {
-            const [practicante] = await db.execute(
-                'SELECT id FROM practicantes WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (practicante.length === 0 || appointment.practicante_id !== practicante[0].id) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permiso para actualizar esta cita'
-                });
-            }
-        }
-
-        const updatedAppointment = await Appointment.update(id, {
-            ...req.body,
-            updated_by: req.user.userId
-        });
-
-        res.json({
-            success: true,
-            message: 'Cita actualizada exitosamente',
-            data: updatedAppointment
-        });
-    } catch (error) {
-        console.error('Error updating appointment:', error);
-        
-        if (error.message.includes('Conflicto')) {
-            return res.status(409).json({
-                success: false,
-                message: error.message
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            message: 'Error al actualizar cita',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-};
-
 // Confirmar cita
 exports.confirmAppointment = async (req, res) => {
     try {
         const { id } = req.params;
-        
-        const confirmed = await Appointment.confirm(id, req.user.userId);
 
-        if (confirmed) {
-            res.json({
-                success: true,
-                message: 'Cita confirmada exitosamente'
-            });
-        } else {
-            res.status(400).json({
+        const [citas] = await db.execute(
+            'SELECT * FROM citas WHERE id = ? AND estado = "pendiente"',
+            [id]
+        );
+
+        if (citas.length === 0) {
+            return res.status(400).json({
                 success: false,
-                message: 'No se pudo confirmar la cita. Verifica que esté en estado pendiente'
+                message: 'Cita no encontrada o no puede ser confirmada'
             });
         }
+
+        await db.execute(
+            'UPDATE citas SET estado = "confirmada" WHERE id = ?',
+            [id]
+        );
+
+        res.json({
+            success: true,
+            message: 'Cita confirmada exitosamente'
+        });
     } catch (error) {
         console.error('Error confirming appointment:', error);
         res.status(500).json({
@@ -305,42 +319,25 @@ exports.confirmAppointment = async (req, res) => {
 exports.cancelAppointment = async (req, res) => {
     try {
         const { id } = req.params;
-        const { motivo } = req.body;
-        
-        const appointment = await Appointment.findById(id);
-        if (!appointment) {
-            return res.status(404).json({
+        const { motivo_cancelacion } = req.body;
+
+        const [citas] = await db.execute(
+            'SELECT * FROM citas WHERE id = ? AND estado IN ("pendiente", "confirmada")',
+            [id]
+        );
+
+        if (citas.length === 0) {
+            return res.status(400).json({
                 success: false,
-                message: 'Cita no encontrada'
+                message: 'Cita no encontrada o no puede ser cancelada'
             });
         }
 
-        // Verificar permisos: paciente, practicante o maestro pueden cancelar
-        if (req.user.tipo_usuario === 'paciente') {
-            const [paciente] = await db.execute(
-                'SELECT id FROM pacientes WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (paciente.length === 0 || appointment.paciente_id !== paciente[0].id) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permiso para cancelar esta cita'
-                });
-            }
-        } else if (req.user.tipo_usuario === 'practicante') {
-            const [practicante] = await db.execute(
-                'SELECT id FROM practicantes WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (practicante.length === 0 || appointment.practicante_id !== practicante[0].id) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permiso para cancelar esta cita'
-                });
-            }
-        }
-
-        await Appointment.cancel(id, req.user.userId, motivo);
+        // Nota: No existe columna motivo_cancelacion en tu BD
+        await db.execute(
+            'UPDATE citas SET estado = "cancelada" WHERE id = ?',
+            [id]
+        );
 
         res.json({
             success: true,
@@ -350,7 +347,7 @@ exports.cancelAppointment = async (req, res) => {
         console.error('Error canceling appointment:', error);
         res.status(500).json({
             success: false,
-            message: error.message || 'Error al cancelar cita'
+            message: 'Error al cancelar cita'
         });
     }
 };
@@ -359,7 +356,7 @@ exports.cancelAppointment = async (req, res) => {
 exports.completeAppointment = async (req, res) => {
     try {
         const { id } = req.params;
-        const { tratamiento_realizado } = req.body;
+        const { tratamiento_realizado, notas } = req.body;
 
         if (!tratamiento_realizado) {
             return res.status(400).json({
@@ -368,29 +365,26 @@ exports.completeAppointment = async (req, res) => {
             });
         }
 
-        const appointment = await Appointment.findById(id);
-        if (!appointment) {
-            return res.status(404).json({
+        const [citas] = await db.execute(
+            'SELECT * FROM citas WHERE id = ? AND estado = "confirmada"',
+            [id]
+        );
+
+        if (citas.length === 0) {
+            return res.status(400).json({
                 success: false,
-                message: 'Cita no encontrada'
+                message: 'Cita no encontrada o no puede ser completada'
             });
         }
 
-        // Solo practicantes y maestros pueden completar citas
-        if (req.user.tipo_usuario === 'practicante') {
-            const [practicante] = await db.execute(
-                'SELECT id FROM practicantes WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (practicante.length === 0 || appointment.practicante_id !== practicante[0].id) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permiso para completar esta cita'
-                });
-            }
-        }
-
-        await Appointment.complete(id, req.user.userId, tratamiento_realizado);
+        await db.execute(
+            `UPDATE citas 
+             SET estado = "completada", 
+                 tratamiento_realizado = ?, 
+                 notas = ? 
+             WHERE id = ?`,
+            [tratamiento_realizado, notas || null, id]
+        );
 
         res.json({
             success: true,
@@ -410,24 +404,79 @@ exports.markNoShow = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const marked = await Appointment.markNoShow(id, req.user.userId);
+        const [citas] = await db.execute(
+            'SELECT * FROM citas WHERE id = ? AND estado = "confirmada"',
+            [id]
+        );
 
-        if (marked) {
-            res.json({
-                success: true,
-                message: 'Cita marcada como no asistió'
-            });
-        } else {
-            res.status(400).json({
+        if (citas.length === 0) {
+            return res.status(400).json({
                 success: false,
-                message: 'No se pudo marcar la cita'
+                message: 'Cita no encontrada'
             });
         }
+
+        await db.execute(
+            'UPDATE citas SET estado = "no_asistio" WHERE id = ?',
+            [id]
+        );
+
+        res.json({
+            success: true,
+            message: 'Cita marcada como no asistió'
+        });
     } catch (error) {
         console.error('Error marking no-show:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al marcar cita'
+            message: 'Error al marcar no asistió'
+        });
+    }
+};
+
+// Actualizar cita (para calificación via evaluaciones)
+exports.updateAppointment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { calificacion } = req.body;
+
+        if (!calificacion || calificacion < 1 || calificacion > 5) {
+            return res.status(400).json({
+                success: false,
+                message: 'La calificación debe estar entre 1 y 5'
+            });
+        }
+
+        // Verificar que la cita existe y está completada
+        const [citas] = await db.execute(
+            'SELECT * FROM citas WHERE id = ? AND estado = "completada"',
+            [id]
+        );
+
+        if (citas.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No se pudo calificar la cita. Verifica que esté completada.'
+            });
+        }
+
+        // Crear evaluación en tabla evaluaciones
+        await db.execute(
+            `INSERT INTO evaluaciones 
+             (cita_id, tipo, evaluador_id, evaluado_id, calificacion) 
+             VALUES (?, 'paciente_servicio', ?, ?, ?)`,
+            [id, req.user.userId, citas[0].practicante_id, calificacion]
+        );
+
+        res.json({
+            success: true,
+            message: 'Calificación guardada exitosamente'
+        });
+    } catch (error) {
+        console.error('Error updating appointment:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al calificar cita'
         });
     }
 };
@@ -435,33 +484,39 @@ exports.markNoShow = async (req, res) => {
 // Obtener mis citas (practicante)
 exports.getMyAppointments = async (req, res) => {
     try {
-        if (req.user.tipo_usuario !== 'practicante') {
-            return res.status(403).json({
-                success: false,
-                message: 'Solo los practicantes pueden usar este endpoint'
-            });
+        const { estado, page = 1, limit = 12 } = req.query;
+        const offset = (page - 1) * limit;
+
+        let query = `
+            SELECT 
+                c.*,
+                up.nombre as paciente_nombre,
+                up.apellido as paciente_apellido,
+                p.nombre as practica_nombre
+            FROM citas c
+            LEFT JOIN pacientes pac ON c.paciente_id = pac.id
+            LEFT JOIN usuarios up ON pac.usuario_id = up.id
+            LEFT JOIN practicantes pra ON c.practicante_id = pra.id
+            LEFT JOIN practicas p ON c.practica_id = p.id
+            WHERE pra.usuario_id = ?
+        `;
+        
+        const params = [req.user.userId];
+
+        if (estado) {
+            query += ' AND c.estado = ?';
+            params.push(estado);
         }
 
-        const [practicante] = await db.execute(
-            'SELECT id FROM practicantes WHERE usuario_id = ?',
-            [req.user.userId]
-        );
+        query += ' ORDER BY c.fecha_hora DESC';
+        query += ` LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
 
-        if (practicante.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Practicante no encontrado'
-            });
-        }
-
-        const appointments = await Appointment.getByPracticante(
-            practicante[0].id,
-            { estado: req.query.estado }
-        );
+        const [appointments] = await db.execute(query, params);
 
         res.json({
             success: true,
-            data: appointments
+            data: appointments,
+            total: appointments.length
         });
     } catch (error) {
         console.error('Error getting my appointments:', error);
@@ -475,33 +530,39 @@ exports.getMyAppointments = async (req, res) => {
 // Obtener citas del paciente
 exports.getPatientAppointments = async (req, res) => {
     try {
-        if (req.user.tipo_usuario !== 'paciente') {
-            return res.status(403).json({
-                success: false,
-                message: 'Solo los pacientes pueden usar este endpoint'
-            });
+        const { estado, page = 1, limit = 12 } = req.query;
+        const offset = (page - 1) * limit;
+
+        let query = `
+            SELECT 
+                c.*,
+                upr.nombre as practicante_nombre,
+                upr.apellido as practicante_apellido,
+                p.nombre as practica_nombre
+            FROM citas c
+            LEFT JOIN practicantes pra ON c.practicante_id = pra.id
+            LEFT JOIN usuarios upr ON pra.usuario_id = upr.id
+            LEFT JOIN pacientes pac ON c.paciente_id = pac.id
+            LEFT JOIN practicas p ON c.practica_id = p.id
+            WHERE pac.usuario_id = ?
+        `;
+        
+        const params = [req.user.userId];
+
+        if (estado) {
+            query += ' AND c.estado = ?';
+            params.push(estado);
         }
 
-        const [paciente] = await db.execute(
-            'SELECT id FROM pacientes WHERE usuario_id = ?',
-            [req.user.userId]
-        );
+        query += ' ORDER BY c.fecha_hora DESC';
+        query += ` LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
 
-        if (paciente.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Paciente no encontrado'
-            });
-        }
-
-        const appointments = await Appointment.getByPaciente(
-            paciente[0].id,
-            { estado: req.query.estado }
-        );
+        const [appointments] = await db.execute(query, params);
 
         res.json({
             success: true,
-            data: appointments
+            data: appointments,
+            total: appointments.length
         });
     } catch (error) {
         console.error('Error getting patient appointments:', error);
@@ -512,143 +573,120 @@ exports.getPatientAppointments = async (req, res) => {
     }
 };
 
-// Obtener horarios disponibles para agendar
+// Obtener horarios disponibles
 exports.getAvailableSlots = async (req, res) => {
     try {
-        const { practica_id, practicante_id, fecha } = req.query;
+        const { practicante_id, fecha } = req.query;
 
-        if (!practica_id || !practicante_id || !fecha) {
+        console.log('getAvailableSlots - params:', { practicante_id, fecha });
+
+        if (!practicante_id || !fecha) {
             return res.status(400).json({
                 success: false,
-                message: 'practica_id, practicante_id y fecha son requeridos'
+                message: 'practicante_id y fecha son requeridos'
             });
         }
 
-        // Obtener maestro de la práctica
-        const [practice] = await db.execute(
-            'SELECT maestro_id FROM practicas WHERE id = ?',
-            [practica_id]
+        // ⭐ Convertir usuario_id a practicante.id
+        const [practicante] = await db.execute(
+            'SELECT id FROM practicantes WHERE usuario_id = ?',
+            [practicante_id]
         );
 
-        if (practice.length === 0) {
+        if (practicante.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Práctica no encontrada'
+                message: 'Practicante no encontrado'
             });
         }
 
-        // Obtener disponibilidad del maestro
-        const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-        const fechaObj = new Date(fecha + 'T00:00:00');
-        const diaSemana = dias[fechaObj.getDay()];
-
-        const [disponibilidad] = await db.execute(
-            `SELECT * FROM disponibilidad_maestros 
-             WHERE maestro_id = ? AND dia_semana = ? AND activo = 1`,
-            [practice[0].maestro_id, diaSemana]
-        );
-
-        if (disponibilidad.length === 0) {
-            return res.json({
-                success: true,
-                data: {
-                    fecha,
-                    dia_semana: diaSemana,
-                    slots: []
-                }
-            });
-        }
+        const practicante_db_id = practicante[0].id;
 
         // Obtener citas del practicante para ese día
-        const [citasPracticante] = await db.execute(
+        const [citasExistentes] = await db.execute(
             `SELECT DATE_FORMAT(fecha_hora, '%H:%i') as hora, duracion_minutos
              FROM citas
              WHERE practicante_id = ? AND DATE(fecha_hora) = ?
              AND estado NOT IN ('cancelada', 'no_asistio')`,
-            [practicante_id, fecha]
+            [practicante_db_id, fecha]
         );
 
-        // Generar slots disponibles
+        console.log('Citas existentes:', citasExistentes);
+
+        // Generar slots de 8:00 AM a 8:00 PM cada 30 minutos
         const slots = [];
-
-        for (const horario of disponibilidad) {
-            const [horaInicio, minInicio] = horario.hora_inicio.split(':').map(Number);
-            const [horaFin, minFin] = horario.hora_fin.split(':').map(Number);
-
-            let currentMinutes = horaInicio * 60 + minInicio;
-            const endMinutes = horaFin * 60 + minFin;
-
-            while (currentMinutes + 60 <= endMinutes) {
-                const hora = Math.floor(currentMinutes / 60);
-                const minuto = currentMinutes % 60;
-                const horaStr = `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
-
-                // Verificar si el slot está ocupado
-                const ocupado = citasPracticante.some(cita => {
+        for (let hour = 8; hour < 20; hour++) {
+            for (let min of [0, 30]) {
+                const horaStr = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+                
+                // Verificar si está ocupado
+                const ocupado = citasExistentes.some(cita => {
                     const [citaHora, citaMin] = cita.hora.split(':').map(Number);
                     const citaMinutes = citaHora * 60 + citaMin;
-                    const citaEndMinutes = citaMinutes + cita.duracion_minutos;
-
-                    return (currentMinutes >= citaMinutes && currentMinutes < citaEndMinutes) ||
-                           (currentMinutes + 60 > citaMinutes && currentMinutes + 60 <= citaEndMinutes);
+                    const slotMinutes = hour * 60 + min;
+                    
+                    return slotMinutes >= citaMinutes && slotMinutes < (citaMinutes + cita.duracion_minutos);
                 });
 
-                slots.push({
-                    hora: horaStr,
-                    disponible: !ocupado
-                });
-
-                currentMinutes += 60;
+                if (!ocupado) {
+                    slots.push(horaStr);
+                }
             }
         }
 
+        console.log('Slots disponibles:', slots);
+
         res.json({
             success: true,
-            data: {
-                fecha,
-                dia_semana: diaSemana,
-                practica_id: parseInt(practica_id),
-                practicante_id: parseInt(practicante_id),
-                slots: slots.sort((a, b) => a.hora.localeCompare(b.hora))
-            }
+            data: slots
         });
     } catch (error) {
         console.error('Error getting available slots:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al obtener horarios disponibles'
+            message: 'Error al obtener horarios disponibles',
+            error: error.message
         });
     }
 };
 
-// Obtener estadísticas de citas
+// Obtener estadísticas
 exports.getStatistics = async (req, res) => {
     try {
-        let filters = {};
+        let whereClause = '';
+        const params = [];
 
         if (req.user.tipo_usuario === 'practicante') {
-            const [practicante] = await db.execute(
-                'SELECT id FROM practicantes WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (practicante.length > 0) {
-                filters.practicante_id = practicante[0].id;
-            }
+            whereClause = 'WHERE pra.usuario_id = ?';
+            params.push(req.user.userId);
+        } else if (req.user.tipo_usuario === 'paciente') {
+            whereClause = 'WHERE pac.usuario_id = ?';
+            params.push(req.user.userId);
         } else if (req.user.tipo_usuario === 'maestro') {
-            const [maestro] = await db.execute(
-                'SELECT id FROM maestros WHERE usuario_id = ?',
-                [req.user.userId]
-            );
-            if (maestro.length > 0) {
-                filters.maestro_id = maestro[0].id;
-            }
+            whereClause = 'WHERE p.maestro_id IN (SELECT id FROM maestros WHERE usuario_id = ?)';
+            params.push(req.user.userId);
         }
 
-        const statistics = await Appointment.getStatistics(filters);
+        const query = `
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN c.estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
+                SUM(CASE WHEN c.estado = 'confirmada' THEN 1 ELSE 0 END) as confirmadas,
+                SUM(CASE WHEN c.estado = 'completada' THEN 1 ELSE 0 END) as completadas,
+                SUM(CASE WHEN c.estado = 'cancelada' THEN 1 ELSE 0 END) as canceladas,
+                SUM(CASE WHEN c.estado = 'no_asistio' THEN 1 ELSE 0 END) as no_asistio
+            FROM citas c
+            LEFT JOIN pacientes pac ON c.paciente_id = pac.id
+            LEFT JOIN practicantes pra ON c.practicante_id = pra.id
+            LEFT JOIN practicas p ON c.practica_id = p.id
+            ${whereClause}
+        `;
+
+        const [stats] = await db.execute(query, params);
 
         res.json({
             success: true,
-            data: statistics
+            data: stats[0]
         });
     } catch (error) {
         console.error('Error getting statistics:', error);

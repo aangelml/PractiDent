@@ -414,47 +414,139 @@ exports.validateMaestroDisponibilidad = [
 // ============================================
 
 // Validar creación de cita
-exports.validateCreateAppointment = [
-  body('practica_id')
-    .notEmpty().withMessage('El ID de la práctica es requerido')
-    .isInt({ min: 1 }).withMessage('ID de práctica inválido'),
+const validateCreateAppointment = (req, res, next) => {
+  const errors = [];
   
-  body('practicante_id')
-    .notEmpty().withMessage('El ID del practicante es requerido')
-    .isInt({ min: 1 }).withMessage('ID de practicante inválido'),
+  const {
+    paciente_id,
+    practicante_id,
+    practica_id,
+    fecha_hora,
+    duracion_minutos,
+    motivo_consulta,
+    observaciones_paciente
+  } = req.body;
+
+  // Validar campos requeridos
+  if (!paciente_id) {
+    errors.push({ field: 'paciente_id', message: 'El paciente es requerido' });
+  }
+
+  if (!practicante_id) {
+    errors.push({ field: 'practicante_id', message: 'El practicante es requerido' });
+  }
+
+  if (!practica_id) {
+    errors.push({ field: 'practica_id', message: 'La práctica es requerida' });
+  }
+
+  if (!fecha_hora) {
+    errors.push({ field: 'fecha_hora', message: 'La fecha y hora son requeridas' });
+  }
+
+  if (!motivo_consulta) {
+    errors.push({ field: 'motivo_consulta', message: 'El motivo de consulta es requerido' });
+  } else if (motivo_consulta.length < 5) { // ⭐ SOLO CAMBIO ESTO: de 10 a 5
+    errors.push({ field: 'motivo_consulta', message: 'El motivo debe tener al menos 5 caracteres' });
+  } else if (motivo_consulta.length > 500) {
+    errors.push({ field: 'motivo_consulta', message: 'El motivo no puede exceder 500 caracteres' });
+  }
+
+  if (duracion_minutos && (duracion_minutos < 15 || duracion_minutos > 240)) {
+    errors.push({ field: 'duracion_minutos', message: 'La duración debe estar entre 15 y 240 minutos' });
+  }
+
+  if (observaciones_paciente && observaciones_paciente.length > 1000) {
+    errors.push({ field: 'observaciones_paciente', message: 'Las observaciones no pueden exceder 1000 caracteres' });
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Error de validación',
+      errors
+    });
+  }
+
+  next();
+};
+
+const validateAppointmentId = (req, res, next) => {
+  const { id } = req.params;
+  if (!id || isNaN(id)) {
+    return res.status(400).json({
+      success: false,
+      message: 'ID de cita inválido'
+    });
+  }
+  next();
+};
+
+const validateAppointmentFilters = (req, res, next) => {
+  // Validaciones opcionales de filtros
+  next();
+};
+
+const validateAvailableSlots = (req, res, next) => {
+  const { practicante_id, fecha } = req.query;
   
-  body('paciente_id')
-    .notEmpty().withMessage('El ID del paciente es requerido')
-    .isInt({ min: 1 }).withMessage('ID de paciente inválido'),
-  
-  body('fecha_hora')
-    .notEmpty().withMessage('La fecha y hora son requeridas')
-    .isISO8601().withMessage('Formato de fecha/hora inválido')
-    .custom((value) => {
-      const appointmentDate = new Date(value);
-      const now = new Date();
-      if (appointmentDate < now) {
-        throw new Error('La fecha de la cita no puede ser en el pasado');
-      }
-      return true;
-    }),
-  
-  body('duracion_minutos')
-    .optional()
-    .isInt({ min: 15, max: 240 }).withMessage('La duración debe ser entre 15 y 240 minutos'),
-  
-  body('motivo_consulta')
-    .notEmpty().withMessage('El motivo de consulta es requerido')
-    .trim()
-    .isLength({ min: 10, max: 500 }).withMessage('El motivo debe tener entre 10 y 500 caracteres'),
-  
-  body('notas')
-    .optional()
-    .trim()
-    .isLength({ max: 1000 }).withMessage('Las notas no pueden exceder 1000 caracteres'),
-  
-  handleValidationErrors
-];
+  if (!practicante_id) {
+    return res.status(400).json({
+      success: false,
+      message: 'El practicante_id es requerido'
+    });
+  }
+
+  if (!fecha) {
+    return res.status(400).json({
+      success: false,
+      message: 'La fecha es requerida'
+    });
+  }
+
+  next();
+};
+
+const validateUpdateAppointment = (req, res, next) => {
+  next();
+};
+
+const validateCancelAppointment = (req, res, next) => {
+  next();
+};
+
+const validateCompleteAppointment = (req, res, next) => {
+  const errors = [];
+  const { diagnostico, tratamiento_realizado } = req.body;
+
+  if (!diagnostico) {
+    errors.push({ field: 'diagnostico', message: 'El diagnóstico es requerido' });
+  }
+
+  if (!tratamiento_realizado) {
+    errors.push({ field: 'tratamiento_realizado', message: 'El tratamiento es requerido' });
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Error de validación',
+      errors
+    });
+  }
+
+  next();
+};
+
+module.exports = {
+  validateCreateAppointment,
+  validateUpdateAppointment,
+  validateCancelAppointment,
+  validateCompleteAppointment,
+  validateAppointmentId,
+  validateAppointmentFilters,
+  validateAvailableSlots
+};
 
 // Validar actualización de cita
 exports.validateUpdateAppointment = [

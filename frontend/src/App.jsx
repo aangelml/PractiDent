@@ -23,11 +23,17 @@ import UsersList from './pages/users/UsersList.jsx';
 import CreateUser from './pages/users/CreateUser.jsx';
 import UserDetail from './pages/users/UserDetail.jsx';
 
-// Practices Pages (SPRINT F3) ⭐ NUEVO
+// Practices Pages (SPRINT F3)
 import PracticesList from './pages/practices/PracticesList.jsx';
 import CreatePractice from './pages/practices/CreatePractice.jsx';
 import PracticeDetail from './pages/practices/PracticeDetail.jsx';
 import MyPractices from './pages/practices/MyPractices.jsx';
+
+// Appointments Pages (SPRINT F4)
+import AppointmentsList from './pages/appointments/AppointmentsList.jsx';
+import CreateAppointment from './pages/appointments/CreateAppointment.jsx';
+import MyAppointments from './pages/appointments/MyAppointments.jsx';
+import AppointmentDetail from './pages/appointments/AppointmentDetail.jsx';
 
 // Components
 import Loader from './components/ui/Loader.jsx';
@@ -168,7 +174,7 @@ function App() {
           }
         />
 
-        {/* ⭐ RUTAS SPRINT F3 - GESTIÓN DE PRÁCTICAS (Maestro y Admin) */}
+        {/* RUTAS SPRINT F3 - GESTIÓN DE PRÁCTICAS (Maestro y Admin) */}
         <Route
           path="/practicas"
           element={
@@ -208,7 +214,7 @@ function App() {
           }
         />
 
-        {/* ⭐ RUTAS SPRINT F3 - MIS PRÁCTICAS (Solo Practicante) */}
+        {/* RUTAS SPRINT F3 - MIS PRÁCTICAS (Solo Practicante) */}
         <Route
           path="/mis-practicas"
           element={
@@ -231,6 +237,76 @@ function App() {
                   <PracticeDetail />
                 </Layout>
               </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        {/* ⭐ RUTAS SPRINT F4 - GESTIÓN DE CITAS */}
+        
+        {/* PACIENTE - Solicitar cita (usa CreateAppointment que ya tienes) */}
+        <Route
+          path="/citas/nueva"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.PACIENTE]}>
+                <Layout>
+                  <CreateAppointment />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        {/* PACIENTE - Ver sus citas */}
+        <Route
+          path="/mis-citas"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.PACIENTE, ROLES.PRACTICANTE]}>
+                <Layout>
+                  <MyAppointments />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        {/* PRACTICANTE - Ver su agenda (reutiliza MyAppointments) */}
+        <Route
+          path="/agenda"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.PRACTICANTE]}>
+                <Layout>
+                  <MyAppointments />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        {/* MAESTRO/ADMIN - Ver todas las citas */}
+        <Route
+          path="/citas"
+          element={
+            <PrivateRoute>
+              <RoleRoute allowedRoles={[ROLES.MAESTRO, ROLES.ADMIN]}>
+                <Layout>
+                  <AppointmentsList />
+                </Layout>
+              </RoleRoute>
+            </PrivateRoute>
+          }
+        />
+
+        {/* TODOS - Ver detalle de cita (con permisos según rol) */}
+        <Route
+          path="/citas/:id"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <AppointmentDetail />
+              </Layout>
             </PrivateRoute>
           }
         />

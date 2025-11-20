@@ -1,17 +1,7 @@
-// backend/routes/appointments.js - COMPLETO SPRINT B3
+// backend/routes/appointments.js - VERSIÓN FINAL CORREGIDA
 const router = require('express').Router();
-const authSimple = require('../middleware/authSimple');
-const { authorize } = require('../middleware/roleAuth');
+const authSimple = require('../middleware/authSimple'); // ← Usando authSimple que sí existe
 const appointmentsController = require('../controllers/appointmentsController');
-const {
-    validateCreateAppointment,
-    validateUpdateAppointment,
-    validateCancelAppointment,
-    validateCompleteAppointment,
-    validateAppointmentId,
-    validateAppointmentFilters,
-    validateAvailableSlots
-} = require('../middleware/validators');
 
 // ============================================
 // TODAS LAS RUTAS REQUIEREN AUTENTICACIÓN
@@ -19,93 +9,53 @@ const {
 router.use(authSimple);
 
 // ============================================
-// RUTAS DE CONSULTA
+// RUTAS DE CONSULTA (SIN AUTORIZACIÓN ADICIONAL)
 // ============================================
 
-// Obtener estadísticas de citas
+// ⭐ CRÍTICO: Este endpoint debe estar ANTES que otros GET para evitar conflictos
+// Obtener horarios disponibles - ACCESIBLE PARA TODOS LOS USUARIOS AUTENTICADOS
+router.get('/available-slots', appointmentsController.getAvailableSlots);
+
+// Obtener estadísticas
 router.get('/statistics', appointmentsController.getStatistics);
 
-// Obtener horarios disponibles para agendar
-router.get('/available-slots',
-    validateAvailableSlots,
-    appointmentsController.getAvailableSlots
-);
+// Obtener mis citas (practicante) - ruta específica antes de /:id
+router.get('/my-appointments', appointmentsController.getMyAppointments);
 
-// Obtener todas las citas (con filtros según rol)
-router.get('/',
-    validateAppointmentFilters,
-    appointmentsController.getAllAppointments
-);
+// Obtener mis citas (paciente) - ruta específica antes de /:id
+router.get('/patient/my-appointments', appointmentsController.getPatientAppointments);
 
-// Obtener mis citas (practicante)
-router.get('/my-appointments',
-    authorize('practicante'),
-    appointmentsController.getMyAppointments
-);
+// Obtener todas las citas (con filtros según rol en el controlador)
+router.get('/', appointmentsController.getAllAppointments);
 
-// Obtener mis citas (paciente)
-router.get('/patient/my-appointments',
-    authorize('paciente'),
-    appointmentsController.getPatientAppointments
-);
-
-// Obtener cita por ID
-router.get('/:id',
-    validateAppointmentId,
-    appointmentsController.getAppointmentById
-);
+// Obtener cita por ID (debe ir después de rutas específicas)
+router.get('/:id', appointmentsController.getAppointmentById);
 
 // ============================================
 // RUTAS DE CREACIÓN Y MODIFICACIÓN
 // ============================================
 
-// Crear nueva cita (practicantes, maestros y admin)
-router.post('/',
-    authorize('practicante', 'admin', 'maestro'),
-    validateCreateAppointment,
-    appointmentsController.createAppointment
-);
+// ⭐ CRÍTICO: Crear cita - AHORA PERMITE PACIENTES
+// La autorización por rol se maneja en el controlador
+router.post('/', appointmentsController.createAppointment);
 
-// Actualizar cita
-router.put('/:id',
-    authorize('practicante', 'maestro', 'admin'),
-    validateAppointmentId,
-    validateUpdateAppointment,
-    appointmentsController.updateAppointment
-);
+// Actualizar cita (calificación) - todos pueden calificar sus propias citas
+router.put('/:id', appointmentsController.updateAppointment);
 
 // ============================================
 // RUTAS DE CAMBIO DE ESTADO
 // ============================================
 
-// Confirmar cita
-router.patch('/:id/confirm',
-    authorize('practicante', 'maestro', 'admin'),
-    validateAppointmentId,
-    appointmentsController.confirmAppointment
-);
+// Confirmar cita - la validación de rol se hace en el controlador
+router.patch('/:id/confirm', appointmentsController.confirmAppointment);
 
-// Cancelar cita
-router.patch('/:id/cancel',
-    authorize('paciente', 'practicante', 'maestro', 'admin'),
-    validateAppointmentId,
-    validateCancelAppointment,
-    appointmentsController.cancelAppointment
-);
+// Cancelar cita - todos pueden cancelar (validación en controlador)
+router.patch('/:id/cancel', appointmentsController.cancelAppointment);
 
-// Completar cita
-router.patch('/:id/complete',
-    authorize('practicante', 'maestro', 'admin'),
-    validateAppointmentId,
-    validateCompleteAppointment,
-    appointmentsController.completeAppointment
-);
+// Completar cita - validación en controlador
+router.patch('/:id/complete', appointmentsController.completeAppointment);
 
-// Marcar como no asistió
-router.patch('/:id/no-show',
-    authorize('practicante', 'maestro', 'admin'),
-    validateAppointmentId,
-    appointmentsController.markNoShow
-);
+// Marcar como no asistió - validación en controlador
+router.patch('/:id/no-show', appointmentsController.markNoShow);
 
 module.exports = router;

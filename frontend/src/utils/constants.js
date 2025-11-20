@@ -139,3 +139,74 @@ export const ASSIGNMENT_ESTADO_COLORS = {
   completado: 'success',
   cancelado: 'error'
 };
+
+// ==================== CITAS ====================
+
+// Estados de Citas
+export const APPOINTMENT_ESTADOS = {
+  PENDIENTE: 'pendiente',
+  CONFIRMADA: 'confirmada',
+  COMPLETADA: 'completada',
+  CANCELADA: 'cancelada',
+  NO_ASISTIO: 'no_asistio'
+};
+
+export const APPOINTMENT_ESTADOS_OPTIONS = [
+  { value: 'pendiente', label: 'Pendiente' },
+  { value: 'confirmada', label: 'Confirmada' },
+  { value: 'completada', label: 'Completada' },
+  { value: 'cancelada', label: 'Cancelada' },
+  { value: 'no_asistio', label: 'No Asistió' }
+];
+
+export const APPOINTMENT_DURACIONES = [
+  { value: 30, label: '30 minutos' },
+  { value: 45, label: '45 minutos' },
+  { value: 60, label: '1 hora' },
+  { value: 90, label: '1 hora 30 minutos' },
+  { value: 120, label: '2 horas' }
+];
+
+export const HORARIO_INICIO = '08:00';
+export const HORARIO_FIN = '20:00';
+export const INTERVALO_MINUTOS = 30;
+
+export const DIAS_SEMANA = [
+  { value: 0, label: 'Domingo', abbr: 'Dom' },
+  { value: 1, label: 'Lunes', abbr: 'Lun' },
+  { value: 2, label: 'Martes', abbr: 'Mar' },
+  { value: 3, label: 'Miércoles', abbr: 'Mié' },
+  { value: 4, label: 'Jueves', abbr: 'Jue' },
+  { value: 5, label: 'Viernes', abbr: 'Vie' },
+  { value: 6, label: 'Sábado', abbr: 'Sáb' }
+];
+
+export const APPOINTMENT_ESTADO_COLORS = {
+  pendiente: 'warning',
+  confirmada: 'info',
+  completada: 'success',
+  cancelada: 'error',
+  no_asistio: 'error'
+};
+
+export const MOTIVOS_CONSULTA = [
+  { value: 'limpieza', label: 'Limpieza Dental' },
+  { value: 'revision', label: 'Revisión General' },
+  { value: 'dolor', label: 'Dolor Dental' },
+  { value: 'ortodoncia', label: 'Ortodoncia' },
+  { value: 'endodoncia', label: 'Endodoncia' },
+  { value: 'extraccion', label: 'Extracción' },
+  { value: 'cirugia', label: 'Cirugía' },
+  { value: 'restauracion', label: 'Restauración' },
+  { value: 'protesis', label: 'Prótesis' },
+  { value: 'estetica', label: 'Estética Dental' },
+  { value: 'otro', label: 'Otro' }
+];
+
+export const CALIFICACIONES = [
+  { value: 1, label: '⭐ Muy Malo' },
+  { value: 2, label: '⭐⭐ Malo' },
+  { value: 3, label: '⭐⭐⭐ Regular' },
+  { value: 4, label: '⭐⭐⭐⭐ Bueno' },
+  { value: 5, label: '⭐⭐⭐⭐⭐ Excelente' }
+];
